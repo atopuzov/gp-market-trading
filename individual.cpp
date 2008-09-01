@@ -3,7 +3,6 @@
 #include "eval.hpp"
 #include "Primitives.hpp"
 
-
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <cstdlib>
@@ -30,26 +29,32 @@ int main(int argc, char *argv[]) {
 		
 		// 3: Evaluacijski operator
 		eval::Handle lEvalOp = new eval;
+
+		// Initialize operators and system
+		lEvalOp->initialize(*lSystem);
+		lSystem->initialize(argc, argv);
+		lSystem->postInit();
+		lEvalOp->postInit(*lSystem);
+		std::string lFileName = "best.xml"; 		// Ucitaj najboljeg
+		
+
+		// Log trgovanja
+		//Beagle::Bool::Handle logTrgovanja = castHandleT<Beagle::Bool>(lSystem->getRegister()["aco.log"]);
+		//logTrgovanja->setWrappedValue(true);
+		
+		Beagle::GP::Individual::Handle lIndividual = new Beagle::GP::Individual;
+		lIndividual->readFromFile(lFileName.c_str(), *lSystem);
+		
+	    // Write individual to screen
+		//std::cout << std::endl << "Read individual: " << lIndividual->serialize() << std::endl;
 	
-		// 4: Build an evolver and a vivarium.
-		GP::Evolver::Handle lEvolver = new GP::Evolver(lEvalOp);
-		GP::Vivarium::Handle lVivarium = new GP::Vivarium;
-		
-		// 5: Initialize and evolve the vivarium.
-		lEvolver->initialize(lSystem, argc, argv);
-		lEvolver->evolve(lVivarium);
-		
-		// Snimi najbolju jedinku u datoteku
-		HallOfFame& lHOF = lVivarium->getHallOfFame();	// Dvorana slavnih
-		lHOF.sort();
-		GP::Individual::Handle lBestOfHOF = castHandleT<GP::Individual>(lHOF[0].mIndividual);
-		ofstream best;
-		best.open("best.xml");
-		PACC::XML::Streamer str(best,2);
-		lBestOfHOF->write(str,true);
-		best.close();
-		
+	    // Evaluate individual
+	    Beagle::Fitness::Handle lFitness = lEvalOp->test(lIndividual, lSystem);
 	
+	    // Write fitness to screen
+	    //std::cout << "Fitness: " << std::endl;
+	    //std::cout << lFitness->serialize() << std::endl;
+
 	} catch(Exception& inException) {
 		inException.terminate();
 	} catch(exception& inException) {

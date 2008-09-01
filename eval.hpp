@@ -4,6 +4,7 @@
 #include "beagle/GP.hpp"
 #include "Context.hpp"
 #include "sqlite3.h"
+#include "util.hpp"
 #include <string>
 #include <vector>
 
@@ -30,6 +31,7 @@ protected:
 	Beagle::String::Handle	dionica;		// Ime dionice
 	Beagle::String::Handle	pocetniDatum;	// Datum od kojeg pocinje trgovanje
 	Beagle::String::Handle	zavrsniDatum;	// Datum do kojeg se trguje
+	Beagle::Bool::Handle    logTrgovanja;	// Log trgovanja
 };
 
 #endif // eval_hpp

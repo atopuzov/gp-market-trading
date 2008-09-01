@@ -42,7 +42,7 @@ int main()
 		gplot += "set xdata time                     \n";
 		gplot += "set format x \"%m/%y\"             \n";
 		gplot += "set output \"" + dionica + ".png\" \n";
-		gplot += "plot [\"2006-01-01\":] '" + dionica + ".dat'     ";
+		gplot += "plot [\"2004-01-01\":] '" + dionica + ".dat'     ";
 		gplot += "using 1:2 title \"" + dionica + "\" with lines \n";
 		//gplot += "using 1:2:3:4:5 title \"" + dionica + "\" with financebars \n";
 		cmd << gplot;

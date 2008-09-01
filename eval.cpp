@@ -13,7 +13,7 @@ eval::eval() :
 void eval::initialize(Beagle::System& ioSystem)
 {
 	Beagle::GP::EvaluationOp::initialize(ioSystem);
-	
+
 	// Ime baze podataka
 	if(ioSystem.getRegister().isRegistered("aco.baza")) {
 		baza = castHandleT<String>(ioSystem.getRegister()["aco.baza"]);
@@ -52,6 +52,7 @@ void eval::initialize(Beagle::System& ioSystem)
 			"Pocetni datum trgovanja");
 		ioSystem.getRegister().addEntry("aco.pdatum", pocetniDatum, lDescription);
 	}
+	
 	// Zavrsni datum trgovanja
 	if(ioSystem.getRegister().isRegistered("aco.zdatum")) {
 		zavrsniDatum = castHandleT<String>(ioSystem.getRegister()["aco.zdatum"]);
@@ -64,6 +65,19 @@ void eval::initialize(Beagle::System& ioSystem)
 			"Zavrsni datum trgovanja");
 		ioSystem.getRegister().addEntry("aco.zdatum", zavrsniDatum, lDescription);
 	}
+	
+	// Log trgovanja
+	if(ioSystem.getRegister().isRegistered("aco.log")) {
+		logTrgovanja = castHandleT<Bool>(ioSystem.getRegister()["aco.log"]);
+	} else {
+		logTrgovanja = new Bool(false);
+		Register::Description lDescription(
+			"log",
+			"Bool",
+			"0",
+			"Log Trgovanja");
+		ioSystem.getRegister().addEntry("aco.log", logTrgovanja, lDescription);
+	}
 }
 
 Fitness::Handle eval::evaluate(GP::Individual& inIndividual, GP::Context& ioContext)
@@ -72,8 +86,8 @@ Fitness::Handle eval::evaluate(GP::Individual& inIndividual, GP::Context& ioCont
     
     aContext.dionica = dionica->getWrappedValue();
     
-    //std::cout << aContext.dionica << std::endl;
-
+	//std::cout << "Dionica: " << aContext.dionica << std::endl;
+	
     sqlite3 *database;													// Baza podataka
     int rc = sqlite3_open(baza->getWrappedValue().c_str(), &database);	// Otvori bazu podataka
     
@@ -82,7 +96,8 @@ Fitness::Handle eval::evaluate(GP::Individual& inIndividual, GP::Context& ioCont
 		std::cerr << "Ne mogu otvoriti bazu podataka! " << sqlite3_errmsg(database) << std::endl;
 		throw "Ne mogu otvoriti bazu podataka!";
 	}
-	aContext.database = database;
+	
+	aContext.database = database;	// SQLite baza podataka
 
 	// SQL Upit
 	string sql  = "SELECT DATUM,ZADNJA,KOLICINA FROM ZSE WHERE DIONICA=UPPER('";
@@ -92,7 +107,7 @@ Fitness::Handle eval::evaluate(GP::Individual& inIndividual, GP::Context& ioCont
 	sql        += "') AND DATE('";
 	sql        += zavrsniDatum->getWrappedValue();			// Zavrsni datum
 	sql        += "') ORDER BY DATE(DATUM) ASC";
-	
+
 	//std::cout << sql << std::endl;
 	
 	sqlite3_stmt *preparedStatement;	// Upit na bazu podataka
@@ -123,13 +138,21 @@ Fitness::Handle eval::evaluate(GP::Individual& inIndividual, GP::Context& ioCont
 		inIndividual.run(lResult, ioContext);			// Pokreni pravilo
 		if(lResult && !naTrzistu)  {					// Kupi
 	    	dionica = (novaca*provizija)/vrjednost;
-	    	//std::cout << "Kupi:   " << dionica << " Novaca: " << novaca << std::endl;
+	    	if(logTrgovanja->getWrappedValue() == true) {
+		    	std::string msg = "Datum: " + aContext.datum + ", cijena: " + to_string<double>(vrjednost);
+		    	msg += ",\tkupujem: " + to_string<double>(dionica) + "\tdionica za: " + to_string<double>(novaca);
+		    	Beagle_LogBasicM(ioContext.getSystem().getLogger(),"eval", "eval",msg);
+    		}
 	    	novaca  = 0;
 	    	naTrzistu  = true;
 	    	trgovao = true;
     	} else if (!lResult && naTrzistu ) {			// Prodaj
     		novaca = (dionica*vrjednost)*provizija;
-    		//std::cout << "Prodaj: " << dionica << " Novaca: " << novaca << std::endl;
+    		if(logTrgovanja->getWrappedValue() == true) {
+		    	std::string msg = "Datum: " + aContext.datum + ", cijena: " + to_string<double>(vrjednost);
+		    	msg += ",\tprodajem: " + to_string<double>(dionica) + "\tdionica za: " + to_string<double>(novaca);
+		    	Beagle_LogBasicM(ioContext.getSystem().getLogger(),"eval", "eval",msg);
+			}
     		dionica = 0;
     		naTrzistu  = false;
     	}
@@ -137,14 +160,24 @@ Fitness::Handle eval::evaluate(GP::Individual& inIndividual, GP::Context& ioCont
 	}
 	sqlite3_finalize(preparedStatement);	// Oslobodi resurse SQL upita
 	if(dionica!=(double)0) novaca = dionica*zadnja*provizija;			// Prodaj sve
-
 	double buyhold = (zadnja/prva)*provizija*(double)iInvesticija;		// Buy and hold strategija
-	//std::cout << "Prva:" << prva << " Zadnja:" << zadnja << " Dionica:" << dionica << " Novaca:" << novaca << " B&h:" << buyhold << std::endl;
+	if(logTrgovanja->getWrappedValue() == true) {
+		std::string msg = "Trgovano dionicom: " + aContext.dionica;
+		Beagle_LogBasicM(ioContext.getSystem().getLogger(),"eval", "eval",msg);
+		msg = "Cijena na pocetku perioda: " + to_string<double>(prva) + 
+			", na kraju perioda: " + to_string<double>(zadnja);
+		Beagle_LogBasicM(ioContext.getSystem().getLogger(),"eval", "eval",msg);
+		msg = "Ostvarena zarada: generirano pravilo: " + to_string<double>(novaca - iInvesticija) +
+			", bh pravilo: " + to_string<double>(buyhold - iInvesticija);
+		Beagle_LogBasicM(ioContext.getSystem().getLogger(),"eval", "eval",msg);
+	}
 
 	sqlite3_close(database);	// Zatvori bazu
 	
 	if(!trgovao)
 		return new FitnessSimple(0.);			// Kaznjavaju se jedinke koje nisu trgovale
+	else if(novaca<iInvesticija)
+		return new FitnessSimple(0.);			// Te lose poslovale
 	else
 	return new FitnessSimple(novaca/buyhold);
 }

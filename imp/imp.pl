@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-
+# http://www.zse.hr/export.aspx?ticker=LEDO-R-A&reporttype=security&DateTo=29.8.2008&DateFrom=1.1.1991&range=
 use DBI;
 
 main:

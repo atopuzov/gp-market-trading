@@ -8,7 +8,7 @@ OBJ      = plot.o
 
 
 prog.exe : $(OBJ)
-	$(CXX) -o prog.exe -L.. -lsqlite3 $(OBJ) 
+	$(CXX) -o prog.exe -L. -lsqlite3 $(OBJ) 
 
 all:	prog.exe
 
