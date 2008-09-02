@@ -10,6 +10,9 @@
 #include "Eq.hpp"
 #include "Context.hpp"
 #include "EphemeralDay.hpp"
+#include "ROC.hpp"
+#include "ConstantDouble.hpp"
+
 
 void AddPrimitives(Beagle::GP::PrimitiveSet::Handle lSet);
 

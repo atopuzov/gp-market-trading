@@ -13,8 +13,8 @@ LSQLITE  = -lsqlite3
 LIBS     = -L. -Llibs $(LBEAGLE) $(LPACC) $(LSQLITE)
 #CXXFLAGS = -g -O2 -Wall -Wno-uninitialized ${IBEAGLE} $(IPACC)
 CXXFLAGS = -O2 -march=i686 -mtune=pentium4 -pipe -fomit-frame-pointer -Wall -Wno-uninitialized ${IBEAGLE} $(IPACC) $(ISQLITE)
-OBJ      = 	eval.o LessThan.o GreaterThan.o IfThenElse.o Avg.o \
-			Max.o Min.o Eq.o Context.o EphemeralDay.o Primitives.o
+OBJ      = 	eval.o LessThan.o GreaterThan.o IfThenElse.o Avg.o ConstantDouble.o \
+			Max.o Min.o Eq.o Context.o EphemeralDay.o Primitives.o ROC.o
 
 .cpp.o:
 	$(CXX) -c $(CXXFLAGS) $< -o $@
