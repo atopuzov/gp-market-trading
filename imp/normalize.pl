@@ -23,6 +23,7 @@ main:
 	
 	$sth = $dbh->prepare( $sql ) or die "Couldn't prepare statement: " . $dbh->errstr;
 	$sth->execute();
+	print "BEGIN TRANSCATION;\n";
 	while (@data = $sth->fetchrow_array()) {
 		my $datum = $data[0];
 		$sql2 = "SELECT DATUM,DIONICA,ZADNJA FROM ZSE WHERE DIONICA='$dionica' AND DATUM < '$datum' ORDER BY DATUM DESC LIMIT 1;";
@@ -36,6 +37,7 @@ main:
 		#$dbh->do($sqlinsert);
 		$sth2->finish(); undef $sth2; # Oslobodi resurse
 	}
+	print "COMMIT;\n";
 	$sth->finish(); undef $sth;			# Oslobodi resurse
 	$dbh->commit();
 	$dbh->disconnect();
