@@ -22,31 +22,34 @@ int main()
 	
 	string sql;
 	sqlite3_stmt *preparedStatement,*preparedStatement2;
-	sql = "SELECT DISTINCT(DIONICA) FROM ZSE";
+	sql = "SELECT DISTINCT(DIONICA) FROM ZSE WHERE DIONICA != 'ZSE'";
 	if ( sqlite3_prepare( database, sql.c_str(), sql.size(), &preparedStatement, NULL ) != SQLITE_OK )
 		throw "Ne mogu prirediti SQL upit!\n";
 
 	ofstream cmd;
 	cmd.open("crtaj");
+	string gplot;
+	gplot += "set terminal png\n";
+	gplot += "set grid\n";
+	gplot += "set border\n";
+	//gplot += "set xtics 10\n";
+	gplot += "set xlabel  \"Datum:\"\n";
+	gplot += "set ylabel  \"Cijena:\"\n";
+	gplot += "set timefmt \"%Y-%m-%d\"\n";
+	gplot += "set xdata time                     \n";
+	gplot += "set format x \"%m/%y\"             \n";
+	cmd << gplot;	
 	while ((rc = sqlite3_step(preparedStatement)) == SQLITE_ROW ) {
 		string dionica = (const char*)sqlite3_column_text(preparedStatement,0);
 		//string sql2  = "SELECT DATE(DATUM),PRVA,NAJVISA,NAJNIZA,ZADNJA FROM ZSE WHERE DIONICA='" + dionica + "';"; 
 		string sql2  = "SELECT DATE(DATUM),PROSJECNA FROM ZSE WHERE DIONICA='" + dionica + "';"; 
 		sqlite3_prepare( database, sql2.c_str(), sql2.size(), &preparedStatement2, NULL );
-		string gplot;
-		gplot += "set terminal png                   \n";
-		//gplot += "set xtics 10                       \n";
-		gplot += "set xlabel  \"Datum:\"             \n";
-		gplot += "set ylabel  \"Cijena:\"            \n";
-		gplot += "set timefmt \"%Y-%m-%d\"           \n";
-		gplot += "set xdata time                     \n";
-		gplot += "set format x \"%m/%y\"             \n";
-		gplot += "set output \"" + dionica + ".png\" \n";
-		gplot += "plot [\"2004-01-01\":] '" + dionica + ".dat'     ";
+
+		gplot = "set output \"" + dionica + ".png\" \n";
+		gplot += "plot [\"2003-01-01\":] '" + dionica + ".dat'     ";
 		gplot += "using 1:2 title \"" + dionica + "\" with lines \n";
 		//gplot += "using 1:2:3:4:5 title \"" + dionica + "\" with financebars \n";
 		cmd << gplot;
-
 		string filename = dionica + ".dat";
 		ofstream dataout;
 		dataout.open(filename.c_str());
