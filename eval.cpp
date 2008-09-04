@@ -160,7 +160,7 @@ Fitness::Handle eval::evaluate(GP::Individual& inIndividual, GP::Context& ioCont
 	}
 	sqlite3_finalize(preparedStatement);	// Oslobodi resurse SQL upita
 	if(dionica!=(double)0) novaca = dionica*zadnja*provizija;			// Prodaj sve
-	double buyhold = (zadnja/prva)*provizija*(double)iInvesticija;		// Buy and hold strategija
+	double buyhold = (zadnja/prva)*provizija*provizija*(double)iInvesticija;		// Buy and hold strategija
 	if(logTrgovanja->getWrappedValue() == true) {
 		std::string msg = "Trgovano dionicom: " + aContext.dionica;
 		Beagle_LogBasicM(ioContext.getSystem().getLogger(),"eval", "eval",msg);
