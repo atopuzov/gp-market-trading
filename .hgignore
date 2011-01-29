@@ -1,3 +1,5 @@
+# Sytax is Shell-style
+syntax: glob
 *.dll
 prog.exe
 beagle.log~

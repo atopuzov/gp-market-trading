@@ -12,7 +12,7 @@ LPACC    = -llibpacc-xml -llibpacc-util -llibpacc-threading -llibpacc-svg -llibp
 LSQLITE  = -lsqlite3
 LIBS     = -L. -Llibs $(LBEAGLE) $(LPACC) $(LSQLITE)
 #CXXFLAGS = -g -O2 -Wall -Wno-uninitialized ${IBEAGLE} $(IPACC)
-CXXFLAGS = -O2 -march=i686 -mtune=pentium4 -pipe -fomit-frame-pointer -Wall -Wno-uninitialized ${IBEAGLE} $(IPACC) $(ISQLITE)
+CXXFLAGS = -O2 -pipe -fomit-frame-pointer -Wall -Wno-uninitialized ${IBEAGLE} $(IPACC) $(ISQLITE)
 OBJ      = 	eval.o LessThan.o GreaterThan.o IfThenElse.o Avg.o ConstantDouble.o \
 			Max.o Min.o Eq.o Context.o EphemeralDay.o Primitives.o ROC.o
 
