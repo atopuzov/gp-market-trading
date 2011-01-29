@@ -11,7 +11,6 @@ LessThan::LessThan() :
   Beagle::GP::Primitive(2, "LT")
 { }
 
-
 #ifdef BEAGLE_HAVE_RTTI
 
 // Argumenti tipa Double

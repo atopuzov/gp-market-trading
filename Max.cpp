@@ -6,11 +6,10 @@
 
 using namespace Beagle;
 
-// Ime LT
+// Ime MAX
 Max::Max() :
   Beagle::GP::Primitive(1, "MAX")
 { }
-
 
 #ifdef BEAGLE_HAVE_RTTI
 
@@ -29,7 +28,7 @@ const std::type_info* Max::getReturnType(Beagle::GP::Context& ioContext) const
 
 #endif // BEAGLE_HAVE_RTTI
 
-// Vraca srednju vrjednost dionice kroz period
+// Vraca najveću vrjednost dionice kroz period
 void Max::execute(GP::Datum& outDatum, GP::Context& ioContext)
 {
 	Double& lResult = castObjectT<Double&>(outDatum);

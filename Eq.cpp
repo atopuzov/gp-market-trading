@@ -6,7 +6,7 @@
 
 using namespace Beagle;
 
-// Ime LT
+// Ime EQ
 Eq::Eq() :
   Beagle::GP::Primitive(2, "EQ")
 { }

@@ -6,11 +6,11 @@ IPACC    = -Iincludes/PACC
 # SQLite includes
 ISQLITE  = -Iincludes/SQLITE
 # OpenBeagle libraries, PACC
-LBEAGLE  = -llibbeagle -llibbeagle-GP -llibbeagle-GA -llibbeagle-Coev
-LPACC    = -llibpacc-xml -llibpacc-util -llibpacc-threading -llibpacc-svg -llibpacc-socket -llibpacc-math
+LBEAGLE  = -lbeagle-3.0.3 -lbeagle-GP-3.0.3 -lbeagle-GA-3.0.3 -lbeagle-Coev-3.0.3
+LPACC    = -lpacc-xml-1.3.1b -lpacc-util-1.3.1b -lpacc-threading-1.3.1b -lpacc-svg-1.3.1b -lpacc-socket-1.3.1b -lpacc-math-1.3.1b
 # SQLite 3 libraries
 LSQLITE  = -lsqlite3
-LIBS     = -L. -Llibs $(LBEAGLE) $(LPACC) $(LSQLITE)
+LIBS     = -L. -L/Users/aco/local/lib $(LBEAGLE) $(LPACC) $(LSQLITE)
 #CXXFLAGS = -g -O2 -Wall -Wno-uninitialized ${IBEAGLE} $(IPACC)
 CXXFLAGS = -O2 -pipe -fomit-frame-pointer -Wall -Wno-uninitialized ${IBEAGLE} $(IPACC) $(ISQLITE)
 OBJ      = 	eval.o LessThan.o GreaterThan.o IfThenElse.o Avg.o ConstantDouble.o \

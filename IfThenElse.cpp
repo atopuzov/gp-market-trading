@@ -6,9 +6,7 @@
 
 using namespace Beagle;
 
-/*!
- *  \brief Construct a new IfThenElse primitive.
- */
+// Ime IF
 IfThenElse::IfThenElse() :
   Beagle::GP::Primitive(3, "IF")
 { }

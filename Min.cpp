@@ -6,11 +6,10 @@
 
 using namespace Beagle;
 
-// Ime LT
+// Ime MIN
 Min::Min() :
   Beagle::GP::Primitive(1, "MIN")
 { }
-
 
 #ifdef BEAGLE_HAVE_RTTI
 

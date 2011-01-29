@@ -7,11 +7,10 @@
 
 using namespace Beagle;
 
-// Ime LT
+// Ime AVG
 Avg::Avg() :
   Beagle::GP::Primitive(1, "AVG")
 { }
-
 
 #ifdef BEAGLE_HAVE_RTTI
 

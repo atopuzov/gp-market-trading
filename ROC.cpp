@@ -7,11 +7,10 @@
 
 using namespace Beagle;
 
-// Ime LT
+// Ime ROC
 ROC::ROC() :
   Beagle::GP::Primitive(1, "ROC")
 { }
-
 
 #ifdef BEAGLE_HAVE_RTTI
 
