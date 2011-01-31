@@ -72,7 +72,7 @@ db.transaction  # Start a database transaction
 rows.collect do |row|
   if row.at_xpath('td[2]').inner_text == 'B' then next end    # Trgovanje blokirano
 
-  datum = row.at_xpath('td[1]').inner_text
+  datum = Date.strptime(row.at_xpath('td[1]').inner_text,'%d.%m.%Y').to_s
   if options[:ticker] != "ZSE" then 
     prva      = row.at_xpath('td[3]' ).inner_text.gsub(".","").gsub(",",".")
     zadnja    = row.at_xpath('td[4]' ).inner_text.gsub(".","").gsub(",",".")
