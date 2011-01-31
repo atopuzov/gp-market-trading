@@ -1,3 +1,4 @@
+#!/usr/bin/ruby
 # (c) 2008-2011 Aleksandar Topuzović <aleksandar.topuzovic@fer.hr>, <aleksandar.topuzovic@gmail.com>
 # Downlads data from www.zse.hr and imports it to a SQLite3 database file
 
@@ -82,7 +83,7 @@ rows.collect do |row|
     kolicina  = row.at_xpath('td[10]').inner_text.gsub(".","").gsub(",",".")
     promet    = row.at_xpath('td[11]').inner_text.gsub(".","").gsub(",",".")
   else
-    prva      = zadnja = najvisa = najniza = prosjecna = promjena = kolicina = 0
+    prva      = zadnja = najvisa = najniza = prosjecna = promjena = kolicina = nil
     promet    = row.at_xpath('td[5]').inner_text.gsub(".","").gsub(",",".")
   end
   
@@ -101,5 +102,3 @@ rows.collect do |row|
 end
 
 db.commit       # End database transaction
-db.close        # Close database
-
