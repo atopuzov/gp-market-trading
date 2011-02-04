@@ -44,6 +44,12 @@ optparse.parse!
 
 # Normalizes the trading data
 def normalize(options, db)
+  case options[:ticker]
+  when "CROBEX", "CROBIS", "CROBEX10"
+    puts "Index values"
+    download(options,db)
+    return
+  end
   sql = "select count(*) from zse where dionica = 'ZSE';"
   if db.get_first_value(sql) <= 0 then
     old_ticker = options[:ticker]
@@ -90,10 +96,13 @@ end
 def download(options, db)
   puts "Downloading: " + options[:ticker]
 
-  if options[:ticker] == "ZSE" then                              # build the URL
-    url = "http://zse.hr/export.aspx?Duzina=20950&reporttype=promet_povijest&naslov="
-  else
-    url = "http://www.zse.hr/export.aspx?ticker=" + options[:ticker] + "&reporttype=security&DateTo=" + options[:dateend] + "&DateFrom=" + options[:datestart] + "&range="
+  case options[:ticker]
+    when "ZSE" then                              # build the URL
+      url = "http://www.zse.hr/export.aspx?Duzina=20950&reporttype=promet_povijest&naslov="
+    when "CROBEX", "CROBEX10", "CROBIS" then
+      url = "http://www.zse.hr/export.aspx?Duzina=20950&reporttype=vrijesnosti_indeksa_povijest"
+    else
+      url = "http://www.zse.hr/export.aspx?ticker=" + options[:ticker] + "&reporttype=security&DateTo=" + options[:dateend] + "&DateFrom=" + options[:datestart] + "&range="
   end
 
   f = open(url)                                         # Download data
@@ -116,19 +125,39 @@ def download(options, db)
     if row.at_xpath('td[2]').inner_text == 'B' then next end    # Trading blocked
 
     datum = Date.strptime(row.at_xpath('td[1]').inner_text,'%d.%m.%Y').to_s
-    if options[:ticker] != "ZSE" then 
-      prva      = row.at_xpath('td[3]' ).inner_text.gsub(".","").gsub(",",".")
-      zadnja    = row.at_xpath('td[4]' ).inner_text.gsub(".","").gsub(",",".")
-      najvisa   = row.at_xpath('td[5]' ).inner_text.gsub(".","").gsub(",",".")
-      najniza   = row.at_xpath('td[6]' ).inner_text.gsub(".","").gsub(",",".")
-      prosjecna = row.at_xpath('td[7]' ).inner_text.gsub(".","").gsub(",",".")
-      promjena  = row.at_xpath('td[8]' ).inner_text.gsub(".","").gsub(",",".").gsub(" ","")
-      kolicina  = row.at_xpath('td[10]').inner_text.gsub(".","").gsub(",",".")
-      promet    = row.at_xpath('td[11]').inner_text.gsub(".","").gsub(",",".")
-    else
-      prva      = zadnja = najvisa = najniza = prosjecna = promjena = kolicina = nil
-      promet    = row.at_xpath('td[5]').inner_text.gsub(".","").gsub(",",".")
+    case options[:ticker]
+      when "ZSE"  then 
+        prva      = zadnja = najvisa = najniza = prosjecna = promjena = kolicina = nil
+        promet    = row.at_xpath('td[5]').inner_text.gsub(".","").gsub(",",".").to_f
+      when "CROBEX", "CROBIS", "CROBEX10"
+        case options[:ticker]
+          when "CROBEX"
+            i_value  = 'td[2]'
+            i_change = 'td[3]'
+          when "CROBIS"
+            i_value  = 'td[6]'
+            i_change = 'td[7]'
+          when "CROBEX10"
+            i_value  = 'td[4]'
+            i_change = 'td[5]'
+        end
+        prva      = zadnja = najvisa = najniza = prosjecna = row.at_xpath(i_value).inner_text.gsub(".","").gsub(",",".").to_f
+        promjena  = row.at_xpath(i_change).inner_text.gsub(".","").gsub(",",".").gsub(" ","").to_f
+        promet    = kolicina = nil
+        if prva == 0
+          next
+        end
+    else  
+      prva      = row.at_xpath('td[3]' ).inner_text.gsub(".","").gsub(",",".").to_f
+      zadnja    = row.at_xpath('td[4]' ).inner_text.gsub(".","").gsub(",",".").to_f
+      najvisa   = row.at_xpath('td[5]' ).inner_text.gsub(".","").gsub(",",".").to_f
+      najniza   = row.at_xpath('td[6]' ).inner_text.gsub(".","").gsub(",",".").to_f
+      prosjecna = row.at_xpath('td[7]' ).inner_text.gsub(".","").gsub(",",".").to_f
+      promjena  = row.at_xpath('td[8]' ).inner_text.gsub(".","").gsub(",",".").gsub(" ","").to_f
+      kolicina  = row.at_xpath('td[10]').inner_text.gsub(".","").gsub(",",".").to_f
+      promet    = row.at_xpath('td[11]').inner_text.gsub(".","").gsub(",",".").to_f
     end
+    #puts options[:ticker] + ": " + datum + "\t" + prva.to_s + "\t" + promjena.to_s
   
     stmt = db.prepare( sql )
     stmt.bind_params( "dionica"   => options[:ticker],
