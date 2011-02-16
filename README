@@ -1,0 +1,30 @@
+Genetric Programming Market Trading (GP)
+
+This projects aim is to find trading rules using genetic programming (GP)
+based on previous prices, volumes etc. and aditional basic tehnical trading
+analysis functions. Generetad program in AST returns either true or false, true
+meaning "signal to buy" or to "hold on" if already bought, and false to sell
+if already bought or "not to buy". The value of the root of the tree can only
+be true or folse (logical funcion, logical constant) and storngly typed
+genetic programming is used (STGP). Implementation is using OpenBEAGLE a
+versatile framework for genetic programming
+
+Trading primitives
+C price
+V volume
+MIN(D) minimum value of te last N days
+MAX(D) maximum value of te last N days
+AVG(D) average value of te last N days
+ROC rate of change
+RSI 
+
+logical functions
+IF if then else
+GT greater than
+LT less then
+EQ equal
+TRUE constant true
+FALSE constant false
+
+(c) 2008-2011 Aleksandar Topuzović
+<aleksandar.topuzovic@fer.hr>, <aleksandar.topuzovic@gmail.com>
