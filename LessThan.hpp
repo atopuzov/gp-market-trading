@@ -1,3 +1,7 @@
+/***************************************************************************
+ * (c) 2008-2011 Aleksandar Topuzović                                      *
+ * <aleksandar.topuzovic@fer.hr>, <aleksandar.topuzovic@gmail.com>         *
+ ***************************************************************************/
 #ifndef LessThan_hpp
 #define LessThan_hpp
 

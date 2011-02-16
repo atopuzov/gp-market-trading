@@ -1,3 +1,7 @@
+/***************************************************************************
+ * (c) 2008-2011 Aleksandar Topuzović                                      *
+ * <aleksandar.topuzovic@fer.hr>, <aleksandar.topuzovic@gmail.com>         *
+ ***************************************************************************/
 #ifndef ConstantDouble_hpp
 #define ConstantDouble_hpp
 

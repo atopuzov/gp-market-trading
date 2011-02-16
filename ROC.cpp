@@ -1,3 +1,7 @@
+/***************************************************************************
+ * (c) 2008-2011 Aleksandar Topuzović                                      *
+ * <aleksandar.topuzovic@fer.hr>, <aleksandar.topuzovic@gmail.com>         *
+ ***************************************************************************/
 #include "beagle/GP.hpp"
 #include "ROC.hpp"
 
@@ -90,5 +94,5 @@ void ROC::execute(GP::Datum& outDatum, GP::Context& ioContext)
 	sqlite3_finalize(preparedStatement2);
 	lResult = (close_today/close_ndaysago-1.)*100.;
 	
-	std::cout << "ROC:" << lResult << std::endl;
+//	std::cout << "ROC:" << lResult << std::endl;
 }
