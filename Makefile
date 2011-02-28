@@ -14,7 +14,7 @@ LIBS     = -L. -L/Users/aco/local/lib $(LBEAGLE) $(LPACC) $(LSQLITE)
 #CXXFLAGS = -g -O2 -Wall -Wno-uninitialized ${IBEAGLE} $(IPACC)
 CXXFLAGS = -O2 -pipe -fomit-frame-pointer -Wall -Wno-uninitialized ${IBEAGLE} $(IPACC) $(ISQLITE)
 OBJ      = 	eval.o LessThan.o GreaterThan.o IfThenElse.o Avg.o ConstantDouble.o \
-			Max.o Min.o Eq.o Context.o EphemeralDay.o Primitives.o ROC.o
+			Max.o Min.o Eq.o Abs.o Context.o EphemeralDay.o Primitives.o ROC.o
 
 .cpp.o:
 	$(CXX) -c $(CXXFLAGS) $< -o $@

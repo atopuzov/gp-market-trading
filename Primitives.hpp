@@ -9,6 +9,7 @@
 #include "GreaterThan.hpp"
 #include "IfThenElse.hpp"
 #include "Avg.hpp"
+#include "Abs.hpp"
 #include "Max.hpp"
 #include "Min.hpp"
 #include "Eq.hpp"

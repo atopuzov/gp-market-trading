@@ -32,5 +32,6 @@ void AddPrimitives(Beagle::GP::PrimitiveSet::Handle lSet)
 	lSet->insert(new Avg);							// Srednja vrijednost cijene
 	lSet->insert(new Min);							// Minimalna vrijednost cijene
 	lSet->insert(new Max);							// Maksimalna vrijednost cijene
+	lSet->insert(new Abs);							// Absolute value
 	lSet->insert(new ROC);							// Rate of change
 }
