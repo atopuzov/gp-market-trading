@@ -1,3 +1,7 @@
+/***************************************************************************
+ * (c) 2008-2011 Aleksandar Topuzović                                      *
+ * <aleksandar.topuzovic@fer.hr>, <aleksandar.topuzovic@gmail.com>         *
+ ***************************************************************************/
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -10,24 +14,24 @@ using namespace std;
 
 int main()
 {
-	//cout << "Dostupne dionice u bazi podataka:" << endl;
 	sqlite3 *database;
 	
-	int rc = sqlite3_open("se.db", &database);	// Otvori bazu podataka
+	int rc = sqlite3_open("se.db", &database);	// Open the database
 	if( rc ) {
-		fprintf(stderr, "Ne mogu otvoriti bazu podataka! : %s\n", sqlite3_errmsg(database));
+		fprintf(stderr, "Unable to open the database se.db! : %s\n", sqlite3_errmsg(database));
 		sqlite3_close(database);
 		exit(1);
 	}
 	
-	string sql;
-	sqlite3_stmt *preparedStatement,*preparedStatement2;
-	sql = "SELECT DISTINCT(DIONICA) FROM ZSE WHERE DIONICA != 'ZSE'";
-	if ( sqlite3_prepare( database, sql.c_str(), sql.size(), &preparedStatement, NULL ) != SQLITE_OK )
-		throw "Ne mogu prirediti SQL upit!\n";
+	// Find out what tickers are available
+	sqlite3_stmt *ps_available_tickers;
+	string sql_available_tickers = "SELECT DISTINCT(DIONICA) FROM ZSE WHERE DIONICA != 'ZSE'";
+	if ( sqlite3_prepare( database, sql_available_tickers.c_str(), sql_available_tickers.size(), &ps_available_tickers, NULL ) != SQLITE_OK )
+		throw "Unable top prepare SQL query!\n";
 
+	// Set the basic gnuplot options
 	ofstream cmd;
-	cmd.open("crtaj");
+	cmd.open("draw.gnuplot");
 	string gplot;
 	gplot += "set terminal png\n";
 	gplot += "set grid\n";
@@ -38,38 +42,55 @@ int main()
 	gplot += "set timefmt \"%Y-%m-%d\"\n";
 	gplot += "set xdata time                     \n";
 	gplot += "set format x \"%m/%y\"             \n";
-	cmd << gplot;	
-	while ((rc = sqlite3_step(preparedStatement)) == SQLITE_ROW ) {
-		string dionica = (const char*)sqlite3_column_text(preparedStatement,0);
-		//string sql2  = "SELECT DATE(DATUM),PRVA,NAJVISA,NAJNIZA,ZADNJA FROM ZSE WHERE DIONICA='" + dionica + "';"; 
-		string sql2  = "SELECT DATE(DATUM),PROSJECNA FROM ZSE WHERE DIONICA='" + dionica + "';"; 
-		sqlite3_prepare( database, sql2.c_str(), sql2.size(), &preparedStatement2, NULL );
+	cmd << gplot;
+	
+	// Loop trough the available tickers
+	while ((rc = sqlite3_step(ps_available_tickers)) == SQLITE_ROW ) {
+		string ticker = (const char*)sqlite3_column_text(ps_available_tickers,0);
+		
+		// Select all the data
+		//string sql_select_data  = "SELECT DATE(DATUM),PRVA,NAJVISA,NAJNIZA,ZADNJA FROM ZSE WHERE DIONICA='" + ticker + "';"; 		
+		string sql_select_data  = "SELECT DATE(DATUM),PROSJECNA FROM ZSE WHERE DIONICA='" + ticker + "';"; 
+		sqlite3_stmt *ps_select_data;
+		sqlite3_prepare( database, sql_select_data.c_str(), sql_select_data.size(), &ps_select_data, NULL );
+		
+		// Find out what is the lowest date in the database
+		sqlite3_stmt *ps_lowest_date;
+		string sql_lowest_date = "SELECT MIN(DATE(DATUM)) FROM ZSE WHERE DIONICA='" + ticker + "';"; 
+		sqlite3_prepare( database, sql_lowest_date.c_str(), sql_lowest_date.size(), &ps_lowest_date, NULL );
+		string min_datum;
+		if( (rc =sqlite3_step(ps_lowest_date)) == SQLITE_ROW )
+			min_datum  = (const char*)sqlite3_column_text(ps_lowest_date,0);
+		else
+			min_datum  = "2000-01-01";		// Set a default date on error
+		sqlite3_finalize(ps_lowest_date);	// Free resources
 
-		gplot = "set output \"" + dionica + ".png\" \n";
-		gplot += "plot [\"2003-01-01\":] '" + dionica + ".dat'     ";
-		gplot += "using 1:2 title \"" + dionica + "\" with lines \n";
-		//gplot += "using 1:2:3:4:5 title \"" + dionica + "\" with financebars \n";
+		gplot =  "set output \"" + ticker + ".png\" \n";
+		gplot += "plot [\"" + min_datum + "\":] '" + ticker + ".dat'     ";
+		gplot += "using 1:2 title \"" + ticker + "\" with lines \n";
+		//gplot += "using 1:2:3:4:5 title \"" + ticker + "\" with financebars \n";
 		cmd << gplot;
-		string filename = dionica + ".dat";
+		string filename = ticker + ".dat";
+		
 		ofstream dataout;
 		dataout.open(filename.c_str());
-		while ((rc = sqlite3_step(preparedStatement2)) == SQLITE_ROW ) {
-			string datum     = (const char*)sqlite3_column_text(preparedStatement2,0);
-			string prva    = (const char*)sqlite3_column_text(preparedStatement2,1);
-			//string najvisa = (const char*)sqlite3_column_text(preparedStatement2,2);
-			//string najniza = (const char*)sqlite3_column_text(preparedStatement2,3);
-			//string zadnja  = (const char*)sqlite3_column_text(preparedStatement2,4);
+		
+		// Loop trough the data and output it ta a file
+		while ((rc = sqlite3_step(ps_select_data)) == SQLITE_ROW ) {
+			string datum   = (const char*)sqlite3_column_text(ps_select_data,0);
+			string prva    = (const char*)sqlite3_column_text(ps_select_data,1);
+			//string najvisa = (const char*)sqlite3_column_text(ps_select_data,2);
+			//string najniza = (const char*)sqlite3_column_text(ps_select_data,3);
+			//string zadnja  = (const char*)sqlite3_column_text(ps_select_data,4);
 			//dataout << datum << "\t" << prva << "\t" << najvisa << "\t" << najniza << "\t" << zadnja << endl;
 			dataout << datum << "\t" << prva << endl;
 		}
-		dataout.close();
-		sqlite3_finalize(preparedStatement2); // Oslobodi zauzete resurse
+		dataout.close();					// Close the file with data
+		sqlite3_finalize(ps_select_data);	// Free resources
 	}
-	cmd.close();
-	sqlite3_finalize(preparedStatement);	// Oslobodi zauzete resurse
-	sqlite3_close(database);	// Zatvori bazu podataka
-	system ("wgnuplot crtaj");
-	//system ("del *.dat");
+	cmd.close();							// Close the gnuplot command file
+	sqlite3_finalize(ps_available_tickers);	// Free resources
+	sqlite3_close(database);				// Close the database
 	return 0;
 }
 
