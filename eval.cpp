@@ -17,7 +17,7 @@ void eval::initialize(Beagle::System& ioSystem)
 {
 	Beagle::GP::EvaluationOp::initialize(ioSystem);
 
-	// Ime baze podataka
+	// Database filename
 	if(ioSystem.getRegister().isRegistered("aco.baza")) {
 		baza = castHandleT<String>(ioSystem.getRegister()["aco.baza"]);
 	} else {
@@ -43,7 +43,7 @@ void eval::initialize(Beagle::System& ioSystem)
 		ioSystem.getRegister().addEntry("aco.dionica", dionica, lDescription);
 	}
 	
-	// Pocetni datum trgovanja
+	// Start date
 	if(ioSystem.getRegister().isRegistered("aco.pdatum")) {
 		start_date = castHandleT<String>(ioSystem.getRegister()["aco.pdatum"]);
 	} else {
@@ -52,11 +52,11 @@ void eval::initialize(Beagle::System& ioSystem)
 			"pDatum",
 			"String",
 			"2006-01-01",
-			"Pocetni datum trgovanja");
+			"Trading start date");
 		ioSystem.getRegister().addEntry("aco.pdatum", start_date, lDescription);
 	}
 	
-	// Zavrsni datum trgovanja
+	// End date
 	if(ioSystem.getRegister().isRegistered("aco.zdatum")) {
 		end_date = castHandleT<String>(ioSystem.getRegister()["aco.zdatum"]);
 	} else {
@@ -65,11 +65,11 @@ void eval::initialize(Beagle::System& ioSystem)
 			"zDatum",
 			"String",
 			"now",
-			"Zavrsni datum trgovanja");
+			"Trading end date");
 		ioSystem.getRegister().addEntry("aco.zdatum", end_date, lDescription);
 	}
 	
-	// Log trgovanja
+	// Trading log
 	if(ioSystem.getRegister().isRegistered("aco.log")) {
 		logTrgovanja = castHandleT<Bool>(ioSystem.getRegister()["aco.log"]);
 	} else {
@@ -78,7 +78,7 @@ void eval::initialize(Beagle::System& ioSystem)
 			"log",
 			"Bool",
 			"0",
-			"Log Trgovanja");
+			"Trading log");
 		ioSystem.getRegister().addEntry("aco.log", logTrgovanja, lDescription);
 	}
 }
@@ -86,17 +86,12 @@ void eval::initialize(Beagle::System& ioSystem)
 double eval::evaluate_interval(GP::Individual& inIndividual, GP::Context& ioContext)
 {
 	Beagle::GP::aco::Context& aContext = castObjectT<Beagle::GP::aco::Context&>(ioContext);
-	
 	aContext.dionica = dionica->getWrappedValue();
 
     sqlite3 *database;													// Sqlite database
-    int rc = sqlite3_open(baza->getWrappedValue().c_str(), &database);	// Open the database
+	int rc;
     
-	if( rc ) {
-		sqlite3_close(database);
-		std::cerr << "Unable to open database! " << sqlite3_errmsg(database) << std::endl;
-		throw "Unable to open database!";
-	}
+	SQLITE_OPEN(rc,baza->getWrappedValue().c_str(),database);
 	
 	aContext.database = database;	// SQLite database
 	
@@ -114,56 +109,50 @@ double eval::evaluate_interval(GP::Individual& inIndividual, GP::Context& ioCont
 //	std::cout << sql << std::endl;
 	
 	sqlite3_stmt *preparedStatement;
-	if ( sqlite3_prepare( database, sql.c_str(), sql.size(), &preparedStatement, NULL ) != SQLITE_OK )
-		throw "Unable to prepare SQL statement!";
+	SQLITE_PREPARE_STATEMENT_TEST(preparedStatement, sql, database);
 	
-	bool trading_log = logTrgovanja->getWrappedValue();
-	// ------	
-	bool on_the_market = false;					// Indicates if we are already on the market
-	bool traded        = false;					// Indicates if the rule did any transactions
-
-    double provizija = 0.995;					// Faktor kojim racunalo proviziju trgovanja
-    double iInvesticija = 100000.;				// Inicijalna investicija
-
-	double shares = 0;							// Initial number of shares
-	double money = iInvesticija;				// Initial ammount of money
-	
-	double price_on_first_day = 0;				// Share price on the dirst day
-	double price_on_last_day = 0;				// Share price on the last day
-   	// ------
+	bool   trading_log        = logTrgovanja->getWrappedValue();
+	bool   on_the_market      = false;					// Indicates if we are already on the market
+	bool   traded             = false;					// Indicates if the rule did any transactions
+    double provizija          = 0.995;					// Faktor kojim racunalo proviziju trgovanja
+    double iInvesticija       = 100000.;				// Inicijalna investicija
+	double shares             = 0;						// Initial number of shares
+	double money              = iInvesticija;			// Initial ammount of money
+	double price_on_first_day = 0;						// Share price on the first day
+	double price_on_last_day  = 0;						// Share price on the last day
 
 	while ( (rc = sqlite3_step(preparedStatement)) == SQLITE_ROW ) {	// Loop trough all the records
 	
-		aContext.datum = (const char *)sqlite3_column_text(preparedStatement,0);	// Trenutni datum
+		aContext.datum = (const char *)sqlite3_column_text(preparedStatement,0);	// Current date
 		
 		double vrjednost = sqlite3_column_double(preparedStatement,1);
-		setValue("C", (Beagle::Double)vrjednost, ioContext);		// Postavi cjenu
+		setValue("C", (Beagle::Double)vrjednost, ioContext);	// Set price
 		
 		double kolicina = sqlite3_column_double(preparedStatement,2);
-		setValue("V", (Beagle::Double)kolicina, ioContext);		// Postavi kolicinu
+		setValue("V", (Beagle::Double)kolicina, ioContext);		// Set volume traded
 		
 		price_on_last_day = vrjednost;
 		
 		//std::cout << "Vrjednost: " << vrjednost << ", datum:" << aContext.datum << std::endl;
 
-		Bool rule_signal;
-		inIndividual.run(rule_signal, ioContext);				// Execute the rule
+		Bool trading_rule_signal;
+		inIndividual.run(trading_rule_signal, ioContext);		// Execute the rule
 		
 		// 1. If off the market and the signal is buy (true)   => buy
 		// 2. If on the market and the signal is buy (true)    => stay on market (don't sell)
 		// 3. If off the market and the signal is sell (false) => stay off the market (don't buy)
 		// 4. If on the market and the signal is sell (false)  => sell
-		if(rule_signal && !on_the_market)  {					// Buy
+		if(trading_rule_signal && !on_the_market)  {			// Buy
 	    	shares = (money*provizija)/vrjednost;				// Calculate the number of shares
 			if(trading_log) {
 		    	std::string msg = "Date: " + aContext.datum + ", price: " + to_string<double>(vrjednost);
-		    	msg           += ",\tbuying: " + to_string<double>(shares) + "\tshares for: " + to_string<double>(money);
+		    	msg            += ",\tbuying: " + to_string<double>(shares) + "\tshares for: " + to_string<double>(money);
 		    	Beagle_LogBasicM(ioContext.getSystem().getLogger(),"eval", "eval",msg);
     		}
 	    	money     = 0;
-	    	on_the_market = true;		// We ar on the market now
-	    	traded        = true;		// We have traded at leat once
-    	} else if (!rule_signal && on_the_market ) {			// Sell
+	    	on_the_market = true;								// We are on the market now
+	    	traded        = true;								// We have traded at least once
+    	} else if (!trading_rule_signal && on_the_market ) {	// Sell
     		money = (shares*vrjednost)*provizija;				// Calculate the value
     		if(trading_log) {
 		    	std::string msg = "Date: " + aContext.datum + ", price: " + to_string<double>(vrjednost);
@@ -171,15 +160,15 @@ double eval::evaluate_interval(GP::Individual& inIndividual, GP::Context& ioCont
 		    	Beagle_LogBasicM(ioContext.getSystem().getLogger(),"eval", "eval",msg);
 			}
     		shares = 0;
-    		on_the_market = false;	// We ar off the market
+    		on_the_market = false;								// We are off the market
     	}
     	if(price_on_first_day==(double)0) price_on_first_day = vrjednost;
 	}
 	
-	sqlite3_finalize(preparedStatement);	// Oslobodi resurse SQL upita
+	sqlite3_finalize(preparedStatement);						// Free resources
 	
-	if(shares!=(double)0) money = shares*price_on_last_day*provizija;			// Prodaj sve
-	double buyhold = (price_on_last_day/price_on_first_day)*provizija*provizija*(double)iInvesticija;		// Buy and hold strategija
+	if(shares!=(double)0) money = shares*price_on_last_day*provizija;										// Sell everything at the end
+	double buyhold = (price_on_last_day/price_on_first_day)*provizija*provizija*(double)iInvesticija;		// Buy and hold strategy
 	
 	if(trading_log) {
 		std::string msg = "Trgovano dionicom: " + aContext.dionica;
@@ -196,7 +185,7 @@ double eval::evaluate_interval(GP::Individual& inIndividual, GP::Context& ioCont
 
 	if(!traded)						// Penalize the rules that don't trade
 		return (double)0;
-	else if(money<iInvesticija)		// Or the ones that are bad (loose)
+	else if(money<iInvesticija)		// Or the ones that are bad (lose money)
 		return (double)0;
 	else
 		return money/buyhold;
@@ -205,14 +194,10 @@ double eval::evaluate_interval(GP::Individual& inIndividual, GP::Context& ioCont
 Fitness::Handle eval::evaluate(GP::Individual& inIndividual, GP::Context& ioContext)
 { 
 	sqlite3 *database;
+	int rc;
 	
-	int rc = sqlite3_open("", &database);	// Open the database
-	if( rc ) {
-		sqlite3_close(database);
-		std::cerr << "Unable to open database! " << sqlite3_errmsg(database) << std::endl;
-		throw "Unable to open database!";
-	}
-
+	SQLITE_OPEN(rc,"",database)
+	
 	double interval_divider = 0.5;
 
 	// Calculate the date that splits the dataset into 2 sets (training and validation)
@@ -224,14 +209,11 @@ Fitness::Handle eval::evaluate(GP::Individual& inIndividual, GP::Context& ioCont
 //	std::cout << sql << std::endl;
 	
 	sqlite3_stmt *preparedStatement;
-	if ( sqlite3_prepare( database, sql.c_str(), sql.size(), &preparedStatement, NULL ) != SQLITE_OK )
-		throw "Unable to prepare SQL statement!";
-
-	std::string intermediate_date;
-	if( (rc = sqlite3_step(preparedStatement)) == SQLITE_ROW)
-	{
-		intermediate_date = (const char *)sqlite3_column_text(preparedStatement,0);
-	}
+	SQLITE_PREPARE_STATEMENT_TEST(preparedStatement, sql, database);
+	SQLITE_STEP_TEST(preparedStatement);
+	std::string  intermediate_date = (const char *)sqlite3_column_text(preparedStatement,0);
+	sqlite3_finalize(preparedStatement);	// Free resources
+	sqlite3_close(database);				// Close the database
 
 	// Training set
 	interval_start = start_date->getWrappedValue();		// Starting date
