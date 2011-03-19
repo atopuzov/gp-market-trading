@@ -36,7 +36,11 @@ int main(int argc, char *argv[]) {
 	
 		// 4: Build an evolver and a vivarium.
 		GP::Evolver::Handle lEvolver = new GP::Evolver(lEvalOp);
-		GP::Vivarium::Handle lVivarium = new GP::Vivarium;
+		
+		GP::Tree::Alloc::Handle lTreeAlloc = new GP::Tree::Alloc;
+		FitnessMultiObj::Alloc::Handle lFitnessAlloc = new FitnessMultiObj::Alloc;
+		GP::Vivarium::Handle lVivarium = new GP::Vivarium(lTreeAlloc, lFitnessAlloc);
+	    
 		
 		// 5: Initialize and evolve the vivarium.
 		lEvolver->initialize(lSystem, argc, argv);

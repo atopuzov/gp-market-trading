@@ -31,11 +31,16 @@ public:
   virtual void postInit(Beagle::System& ioSystem);
 
 protected:
+	double evaluate_interval(Beagle::GP::Individual& inIndividual, Beagle::GP::Context& ioContext);
+	
 	Beagle::String::Handle	baza;			// Ime baze
 	Beagle::String::Handle	dionica;		// Ime dionice
-	Beagle::String::Handle	pocetniDatum;	// Datum od kojeg pocinje trgovanje
-	Beagle::String::Handle	zavrsniDatum;	// Datum do kojeg se trguje
+	Beagle::String::Handle	start_date;		// Datum od kojeg pocinje trgovanje
+	Beagle::String::Handle	end_date;		// Datum do kojeg se trguje
 	Beagle::Bool::Handle    logTrgovanja;	// Log trgovanja
+	
+	std::string interval_start;
+	std::string interval_end;
 };
 
 #endif // eval_hpp

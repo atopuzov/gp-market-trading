@@ -23,10 +23,10 @@ void eval::initialize(Beagle::System& ioSystem)
 	} else {
 		baza = new String("se.db");
 		Register::Description lDescription(
-			"Baza podataka",
+			"Database",
 			"String",
 			"se.db",
-			"Ime datoteke s bazom podataka.");
+			"Name of the database file.");
 		ioSystem.getRegister().addEntry("aco.baza", baza, lDescription);
 	}
 	
@@ -36,7 +36,7 @@ void eval::initialize(Beagle::System& ioSystem)
 	} else {
 		dionica = new String("PBZ-R-A");
 		Register::Description lDescription(
-			"Dionica",
+			"Ticker",
 			"String",
 			"PBZ-R-A",
 			"Dionica kojom se trguje");
@@ -45,28 +45,28 @@ void eval::initialize(Beagle::System& ioSystem)
 	
 	// Pocetni datum trgovanja
 	if(ioSystem.getRegister().isRegistered("aco.pdatum")) {
-		pocetniDatum = castHandleT<String>(ioSystem.getRegister()["aco.pdatum"]);
+		start_date = castHandleT<String>(ioSystem.getRegister()["aco.pdatum"]);
 	} else {
-		pocetniDatum = new String("2006-01-01");
+		start_date = new String("2006-01-01");
 		Register::Description lDescription(
 			"pDatum",
 			"String",
 			"2006-01-01",
 			"Pocetni datum trgovanja");
-		ioSystem.getRegister().addEntry("aco.pdatum", pocetniDatum, lDescription);
+		ioSystem.getRegister().addEntry("aco.pdatum", start_date, lDescription);
 	}
 	
 	// Zavrsni datum trgovanja
 	if(ioSystem.getRegister().isRegistered("aco.zdatum")) {
-		zavrsniDatum = castHandleT<String>(ioSystem.getRegister()["aco.zdatum"]);
+		end_date = castHandleT<String>(ioSystem.getRegister()["aco.zdatum"]);
 	} else {
-		zavrsniDatum = new String("now");
+		end_date = new String("now");
 		Register::Description lDescription(
 			"zDatum",
 			"String",
 			"now",
 			"Zavrsni datum trgovanja");
-		ioSystem.getRegister().addEntry("aco.zdatum", zavrsniDatum, lDescription);
+		ioSystem.getRegister().addEntry("aco.zdatum", end_date, lDescription);
 	}
 	
 	// Log trgovanja
@@ -83,48 +83,56 @@ void eval::initialize(Beagle::System& ioSystem)
 	}
 }
 
-Fitness::Handle eval::evaluate(GP::Individual& inIndividual, GP::Context& ioContext)
-{ 
-    Beagle::GP::aco::Context& aContext = castObjectT<Beagle::GP::aco::Context&>(ioContext);
-    
-    aContext.dionica = dionica->getWrappedValue();
-    
-	//std::cout << "Dionica: " << aContext.dionica << std::endl;
+double eval::evaluate_interval(GP::Individual& inIndividual, GP::Context& ioContext)
+{
+	Beagle::GP::aco::Context& aContext = castObjectT<Beagle::GP::aco::Context&>(ioContext);
 	
-    sqlite3 *database;													// Baza podataka
-    int rc = sqlite3_open(baza->getWrappedValue().c_str(), &database);	// Otvori bazu podataka
+	aContext.dionica = dionica->getWrappedValue();
+
+    sqlite3 *database;													// Sqlite database
+    int rc = sqlite3_open(baza->getWrappedValue().c_str(), &database);	// Open the database
     
 	if( rc ) {
 		sqlite3_close(database);
-		std::cerr << "Ne mogu otvoriti bazu podataka! " << sqlite3_errmsg(database) << std::endl;
-		throw "Ne mogu otvoriti bazu podataka!";
+		std::cerr << "Unable to open database! " << sqlite3_errmsg(database) << std::endl;
+		throw "Unable to open database!";
 	}
 	
-	aContext.database = database;	// SQLite baza podataka
-
-	// SQL Upit
+	aContext.database = database;	// SQLite database
+	
+	//std::cout << "Ticker: " << aContext.dionica << std::endl;
+		
+	// SQL Query
 	string sql  = "SELECT DATUM,ZADNJA,KOLICINA FROM ZSE WHERE DIONICA=UPPER('";
-	sql        += dionica->getWrappedValue();				// Dionica
+	sql        += dionica->getWrappedValue();
 	sql        += "') AND DATE(DATUM) BETWEEN DATE('";
-	sql        += pocetniDatum->getWrappedValue();			// Pocetni datum
+	sql        += interval_start;
 	sql        += "') AND DATE('";
-	sql        += zavrsniDatum->getWrappedValue();			// Zavrsni datum
+	sql        += interval_end;
 	sql        += "') ORDER BY DATE(DATUM) ASC";
 
-	//std::cout << sql << std::endl;
+//	std::cout << sql << std::endl;
 	
-	sqlite3_stmt *preparedStatement;	// Upit na bazu podataka
+	sqlite3_stmt *preparedStatement;
 	if ( sqlite3_prepare( database, sql.c_str(), sql.size(), &preparedStatement, NULL ) != SQLITE_OK )
-		throw "Ne mogu prirediti SQL upit!";
+		throw "Unable to prepare SQL statement!";
 	
-    bool naTrzistu = false, trgovao=false;		// Van trzista
+	bool trading_log = logTrgovanja->getWrappedValue();
+	// ------	
+	bool on_the_market = false;					// Indicates if we are already on the market
+	bool traded        = false;					// Indicates if the rule did any transactions
+
     double provizija = 0.995;					// Faktor kojim racunalo proviziju trgovanja
     double iInvesticija = 100000.;				// Inicijalna investicija
-    double dionica = 0, novaca = iInvesticija;	// Pocetne vrjedosti
-    double prva = 0, zadnja = 0;				// Cjena na pocetku razdoblja i cjena na kraju razdoblja
-    
-    
-	while ((rc = sqlite3_step(preparedStatement)) == SQLITE_ROW ) {	// Prodji kroz sve zapise
+
+	double shares = 0;							// Initial number of shares
+	double money = iInvesticija;				// Initial ammount of money
+	
+	double price_on_first_day = 0;				// Share price on the dirst day
+	double price_on_last_day = 0;				// Share price on the last day
+   	// ------
+
+	while ( (rc = sqlite3_step(preparedStatement)) == SQLITE_ROW ) {	// Loop trough all the records
 	
 		aContext.datum = (const char *)sqlite3_column_text(preparedStatement,0);	// Trenutni datum
 		
@@ -134,55 +142,115 @@ Fitness::Handle eval::evaluate(GP::Individual& inIndividual, GP::Context& ioCont
 		double kolicina = sqlite3_column_double(preparedStatement,2);
 		setValue("V", (Beagle::Double)kolicina, ioContext);		// Postavi kolicinu
 		
-		zadnja = vrjednost;
+		price_on_last_day = vrjednost;
+		
 		//std::cout << "Vrjednost: " << vrjednost << ", datum:" << aContext.datum << std::endl;
 
-		Bool lResult;
-		inIndividual.run(lResult, ioContext);			// Pokreni pravilo
-		if(lResult && !naTrzistu)  {					// Kupi
-	    	dionica = (novaca*provizija)/vrjednost;
-	    	if(logTrgovanja->getWrappedValue() == true) {
-		    	std::string msg = "Datum: " + aContext.datum + ", cijena: " + to_string<double>(vrjednost);
-		    	msg += ",\tkupujem: " + to_string<double>(dionica) + "\tdionica za: " + to_string<double>(novaca);
+		Bool rule_signal;
+		inIndividual.run(rule_signal, ioContext);				// Execute the rule
+		
+		// 1. If off the market and the signal is buy (true)   => buy
+		// 2. If on the market and the signal is buy (true)    => stay on market (don't sell)
+		// 3. If off the market and the signal is sell (false) => stay off the market (don't buy)
+		// 4. If on the market and the signal is sell (false)  => sell
+		if(rule_signal && !on_the_market)  {					// Buy
+	    	shares = (money*provizija)/vrjednost;				// Calculate the number of shares
+			if(trading_log) {
+		    	std::string msg = "Date: " + aContext.datum + ", price: " + to_string<double>(vrjednost);
+		    	msg           += ",\tbuying: " + to_string<double>(shares) + "\tshares for: " + to_string<double>(money);
 		    	Beagle_LogBasicM(ioContext.getSystem().getLogger(),"eval", "eval",msg);
     		}
-	    	novaca  = 0;
-	    	naTrzistu  = true;
-	    	trgovao = true;
-    	} else if (!lResult && naTrzistu ) {			// Prodaj
-    		novaca = (dionica*vrjednost)*provizija;
-    		if(logTrgovanja->getWrappedValue() == true) {
-		    	std::string msg = "Datum: " + aContext.datum + ", cijena: " + to_string<double>(vrjednost);
-		    	msg += ",\tprodajem: " + to_string<double>(dionica) + "\tdionica za: " + to_string<double>(novaca);
+	    	money     = 0;
+	    	on_the_market = true;		// We ar on the market now
+	    	traded        = true;		// We have traded at leat once
+    	} else if (!rule_signal && on_the_market ) {			// Sell
+    		money = (shares*vrjednost)*provizija;				// Calculate the value
+    		if(trading_log) {
+		    	std::string msg = "Date: " + aContext.datum + ", price: " + to_string<double>(vrjednost);
+		    	msg            += ",\tselling: " + to_string<double>(shares) + "\tshares for: " + to_string<double>(money);
 		    	Beagle_LogBasicM(ioContext.getSystem().getLogger(),"eval", "eval",msg);
 			}
-    		dionica = 0;
-    		naTrzistu  = false;
+    		shares = 0;
+    		on_the_market = false;	// We ar off the market
     	}
-    	if(prva==(double)0) prva = vrjednost;
+    	if(price_on_first_day==(double)0) price_on_first_day = vrjednost;
 	}
+	
 	sqlite3_finalize(preparedStatement);	// Oslobodi resurse SQL upita
-	if(dionica!=(double)0) novaca = dionica*zadnja*provizija;			// Prodaj sve
-	double buyhold = (zadnja/prva)*provizija*provizija*(double)iInvesticija;		// Buy and hold strategija
-	if(logTrgovanja->getWrappedValue() == true) {
+	
+	if(shares!=(double)0) money = shares*price_on_last_day*provizija;			// Prodaj sve
+	double buyhold = (price_on_last_day/price_on_first_day)*provizija*provizija*(double)iInvesticija;		// Buy and hold strategija
+	
+	if(trading_log) {
 		std::string msg = "Trgovano dionicom: " + aContext.dionica;
 		Beagle_LogBasicM(ioContext.getSystem().getLogger(),"eval", "eval",msg);
-		msg = "Cijena na pocetku perioda: " + to_string<double>(prva) + 
-			", na kraju perioda: " + to_string<double>(zadnja);
+		msg = "Price at the beginning of the interval: " + to_string<double>(price_on_first_day) + 
+			", at the end of the interval: " + to_string<double>(price_on_last_day);
 		Beagle_LogBasicM(ioContext.getSystem().getLogger(),"eval", "eval",msg);
-		msg = "Ostvarena zarada: generirano pravilo: " + to_string<double>(novaca - iInvesticija) +
-			", bh pravilo: " + to_string<double>(buyhold - iInvesticija);
+		msg = "Profit: generated rule: " + to_string<double>(money - iInvesticija) +
+			", buy_hold rule: " + to_string<double>(buyhold - iInvesticija);
 		Beagle_LogBasicM(ioContext.getSystem().getLogger(),"eval", "eval",msg);
 	}
 
-	sqlite3_close(database);	// Zatvori bazu
-	
-	if(!trgovao)
-		return new FitnessSimple(0.);			// Kaznjavaju se jedinke koje nisu trgovale
-	else if(novaca<iInvesticija)
-		return new FitnessSimple(0.);			// Te lose poslovale
+	sqlite3_close(database);		// Close the database
+
+	if(!traded)						// Penalize the rules that don't trade
+		return (double)0;
+	else if(money<iInvesticija)		// Or the ones that are bad (loose)
+		return (double)0;
 	else
-	return new FitnessSimple(novaca/buyhold);
+		return money/buyhold;
+}
+
+Fitness::Handle eval::evaluate(GP::Individual& inIndividual, GP::Context& ioContext)
+{ 
+	sqlite3 *database;
+	
+	int rc = sqlite3_open("", &database);	// Open the database
+	if( rc ) {
+		sqlite3_close(database);
+		std::cerr << "Unable to open database! " << sqlite3_errmsg(database) << std::endl;
+		throw "Unable to open database!";
+	}
+
+	double interval_divider = 0.5;
+
+	// Calculate the date that splits the dataset into 2 sets (training and validation)
+	string sql  = "SELECT DATE(DATETIME(";
+	sql        += "(STRFTIME('%s','" + start_date->getWrappedValue() + "') +";
+	sql        += "(STRFTIME('%s','" + end_date->getWrappedValue() + "') - STRFTIME('%s','" + start_date->getWrappedValue() + "'))*" + to_string<double>(interval_divider) + ")";
+	sql        += ",'unixepoch'))";
+	
+//	std::cout << sql << std::endl;
+	
+	sqlite3_stmt *preparedStatement;
+	if ( sqlite3_prepare( database, sql.c_str(), sql.size(), &preparedStatement, NULL ) != SQLITE_OK )
+		throw "Unable to prepare SQL statement!";
+
+	std::string intermediate_date;
+	if( (rc = sqlite3_step(preparedStatement)) == SQLITE_ROW)
+	{
+		intermediate_date = (const char *)sqlite3_column_text(preparedStatement,0);
+	}
+
+	// Training set
+	interval_start = start_date->getWrappedValue();		// Starting date
+	interval_end   = intermediate_date;
+	double rule_train		= evaluate_interval(inIndividual, ioContext);
+	
+	// Validation set
+	interval_start = intermediate_date;
+	interval_end   = end_date->getWrappedValue();		// End date
+	double rule_validation  = evaluate_interval(inIndividual, ioContext);
+		
+	FitnessMultiObj::Handle lFitness = new FitnessMultiObj(2);	// 2 fitness values
+	(*lFitness)[0] = rule_train;								// Fitness on the train set
+	(*lFitness)[1] = rule_validation;							// Fitness on the validation set
+	
+//	std::cout << start_date->getWrappedValue() << " - " << intermediate_date << " - " << end_date->getWrappedValue() << std::endl;
+//	std::cout << "Training set: " << to_string<double>(rule_train) << ", validation set: " << to_string<double>(rule_validation) << std::endl;
+	
+	return lFitness;
 }
 
 void eval::postInit(System& ioSystem)
