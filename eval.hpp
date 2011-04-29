@@ -35,9 +35,12 @@ protected:
 	
 	Beagle::String::Handle	baza;			// Ime baze
 	Beagle::String::Handle	dionica;		// Ime dionice
-	Beagle::String::Handle	start_date;		// Datum od kojeg pocinje trgovanje
-	Beagle::String::Handle	end_date;		// Datum do kojeg se trguje
-	Beagle::Bool::Handle    logTrgovanja;	// Log trgovanja
+	Beagle::String::Handle	r_startdate;	// First day of trading
+	Beagle::String::Handle	r_enddate;		// Last day of trading
+	Beagle::Bool::Handle    r_log;			// Log trgovanja
+	Beagle::Double::Handle	r_fee;			// Fee
+	Beagle::Double::Handle	r_invest;		// Investment
+	Beagle::Double::Handle	r_divider;		// Training/validation set interval divider
 	
 	std::string interval_start;
 	std::string interval_end;
