@@ -8,10 +8,10 @@
 #include <sstream>
 
 #define SQLITE_OPEN(rc,file_name,database) \
-sqlite3_open(file_name, &database); \
+rc = sqlite3_open(file_name, &database); \
 if( rc ) { \
-	sqlite3_close(database); \
 	std::cerr << "Unable to open database: " << file_name << ", " << sqlite3_errmsg(database) << std::endl; \
+	sqlite3_close(database); \
 	throw "Unable to open database!"; \
 }
 
