@@ -44,43 +44,82 @@ void eval::initialize(Beagle::System& ioSystem)
 	}
 	
 	// Start date
-	if(ioSystem.getRegister().isRegistered("aco.pdatum")) {
-		start_date = castHandleT<String>(ioSystem.getRegister()["aco.pdatum"]);
+	if(ioSystem.getRegister().isRegistered("aco.s_date")) {
+		r_startdate = castHandleT<String>(ioSystem.getRegister()["aco.s_date"]);
 	} else {
-		start_date = new String("2006-01-01");
+		r_startdate = new String("2006-01-01");
 		Register::Description lDescription(
-			"pDatum",
+			"s_date",
 			"String",
 			"2006-01-01",
 			"Trading start date");
-		ioSystem.getRegister().addEntry("aco.pdatum", start_date, lDescription);
+		ioSystem.getRegister().addEntry("aco.s_date", r_startdate, lDescription);
 	}
 	
 	// End date
-	if(ioSystem.getRegister().isRegistered("aco.zdatum")) {
-		end_date = castHandleT<String>(ioSystem.getRegister()["aco.zdatum"]);
+	if(ioSystem.getRegister().isRegistered("aco.e_date")) {
+		r_enddate = castHandleT<String>(ioSystem.getRegister()["aco.e_date"]);
 	} else {
-		end_date = new String("now");
+		r_enddate = new String("now");
 		Register::Description lDescription(
-			"zDatum",
+			"e_date",
 			"String",
 			"now",
 			"Trading end date");
-		ioSystem.getRegister().addEntry("aco.zdatum", end_date, lDescription);
+		ioSystem.getRegister().addEntry("aco.e_date", r_enddate, lDescription);
 	}
 	
 	// Trading log
 	if(ioSystem.getRegister().isRegistered("aco.log")) {
-		logTrgovanja = castHandleT<Bool>(ioSystem.getRegister()["aco.log"]);
+		r_log = castHandleT<Bool>(ioSystem.getRegister()["aco.log"]);
 	} else {
-		logTrgovanja = new Bool(false);
+		r_log = new Bool(false);
 		Register::Description lDescription(
 			"log",
 			"Bool",
 			"0",
 			"Trading log");
-		ioSystem.getRegister().addEntry("aco.log", logTrgovanja, lDescription);
+		ioSystem.getRegister().addEntry("aco.log", r_log, lDescription);
 	}
+	
+	// Fee (commision)
+	if(ioSystem.getRegister().isRegistered("aco.fee")) {
+		r_fee = castHandleT<Double>(ioSystem.getRegister()["aco.fee"]);
+	} else {
+		r_fee = new Double(0.995);
+		Register::Description lDescription(
+			"fee",
+			"Double",
+			"0.995",
+			"Factor to calculate in fee for every transaction");
+		ioSystem.getRegister().addEntry("aco.fee", r_fee, lDescription);
+	}
+	
+	// Amount of money to invest
+	if(ioSystem.getRegister().isRegistered("aco.invest")) {
+		r_invest = castHandleT<Double>(ioSystem.getRegister()["aco.invest"]);
+	} else {
+		r_invest = new Double(100000.);
+		Register::Description lDescription(
+			"invest",
+			"Double",
+			"100000",
+			"Investment ammount");
+		ioSystem.getRegister().addEntry("aco.invest", r_invest, lDescription);
+	}
+	
+	// Interval divider (for training and validation set)
+	if(ioSystem.getRegister().isRegistered("aco.divider")) {
+		r_divider = castHandleT<Double>(ioSystem.getRegister()["aco.divider"]);
+	} else {
+		r_divider = new Double(0.8);
+		Register::Description lDescription(
+			"divider",
+			"Double",
+			"0.8",
+			"Training/validation set interval divider");
+		ioSystem.getRegister().addEntry("aco.divider", r_divider, lDescription);
+	}		
 }
 
 double eval::evaluate_interval(GP::Individual& inIndividual, GP::Context& ioContext)
@@ -111,16 +150,16 @@ double eval::evaluate_interval(GP::Individual& inIndividual, GP::Context& ioCont
 	sqlite3_stmt *preparedStatement;
 	SQLITE_PREPARE_STATEMENT_TEST(preparedStatement, sql, database);
 	
-	bool   trading_log        = logTrgovanja->getWrappedValue();
-	bool   on_the_market      = false;					// Indicates if we are already on the market
-	bool   traded             = false;					// Indicates if the rule did any transactions
-    double provizija          = 0.995;					// Faktor kojim racunalo proviziju trgovanja
-    double iInvesticija       = 100000.;				// Inicijalna investicija
-	double shares             = 0;						// Initial number of shares
-	double money              = iInvesticija;			// Initial ammount of money
+	bool   trading_log        = r_log->getWrappedValue();
+	bool   on_the_market      = false;							// Indicates if we are already on the market
+	bool   traded             = false;							// Indicates if the rule did any transactions
+    double fee_factor         = r_fee->getWrappedValue();		// Factor that incorporates fee in the calculations
+	double invest             = r_invest->getWrappedValue();	// Initial ammount of money
+	double shares             = 0;								// Initial number of shares
+	double money              = invest;
 	double price_on_first_day = 0;						// Share price on the first day
 	double price_on_last_day  = 0;						// Share price on the last day
-
+	
 	while ( (rc = sqlite3_step(preparedStatement)) == SQLITE_ROW ) {	// Loop trough all the records
 	
 		aContext.datum = (const char *)sqlite3_column_text(preparedStatement,0);	// Current date
@@ -143,7 +182,7 @@ double eval::evaluate_interval(GP::Individual& inIndividual, GP::Context& ioCont
 		// 3. If off the market and the signal is sell (false) => stay off the market (don't buy)
 		// 4. If on the market and the signal is sell (false)  => sell
 		if(trading_rule_signal && !on_the_market)  {			// Buy
-	    	shares = (money*provizija)/vrjednost;				// Calculate the number of shares
+	    	shares = (money*fee_factor)/vrjednost;				// Calculate the number of shares
 			if(trading_log) {
 		    	std::string msg = "Date: " + aContext.datum + ", price: " + to_string<double>(vrjednost);
 		    	msg            += ",\tbuying: " + to_string<double>(shares) + "\tshares for: " + to_string<double>(money);
@@ -153,7 +192,7 @@ double eval::evaluate_interval(GP::Individual& inIndividual, GP::Context& ioCont
 	    	on_the_market = true;								// We are on the market now
 	    	traded        = true;								// We have traded at least once
     	} else if (!trading_rule_signal && on_the_market ) {	// Sell
-    		money = (shares*vrjednost)*provizija;				// Calculate the value
+    		money = (shares*vrjednost)*fee_factor;				// Calculate the value
     		if(trading_log) {
 		    	std::string msg = "Date: " + aContext.datum + ", price: " + to_string<double>(vrjednost);
 		    	msg            += ",\tselling: " + to_string<double>(shares) + "\tshares for: " + to_string<double>(money);
@@ -167,8 +206,8 @@ double eval::evaluate_interval(GP::Individual& inIndividual, GP::Context& ioCont
 	
 	sqlite3_finalize(preparedStatement);						// Free resources
 	
-	if(shares!=(double)0) money = shares*price_on_last_day*provizija;										// Sell everything at the end
-	double buyhold = (price_on_last_day/price_on_first_day)*provizija*provizija*(double)iInvesticija;		// Buy and hold strategy
+	if(shares!=(double)0) money = shares*price_on_last_day*fee_factor;										// Sell everything at the end
+	double buyhold = (price_on_last_day/price_on_first_day)*fee_factor*fee_factor*invest;		// Buy and hold strategy
 	
 	if(trading_log) {
 		std::string msg = "Trgovano dionicom: " + aContext.dionica;
@@ -176,8 +215,8 @@ double eval::evaluate_interval(GP::Individual& inIndividual, GP::Context& ioCont
 		msg = "Price at the beginning of the interval: " + to_string<double>(price_on_first_day) + 
 			", at the end of the interval: " + to_string<double>(price_on_last_day);
 		Beagle_LogBasicM(ioContext.getSystem().getLogger(),"eval", "eval",msg);
-		msg = "Profit: generated rule: " + to_string<double>(money - iInvesticija) +
-			", buy_hold rule: " + to_string<double>(buyhold - iInvesticija);
+		msg = "Profit: generated rule: " + to_string<double>(money - invest) +
+			", buy_hold rule: " + to_string<double>(buyhold - invest);
 		Beagle_LogBasicM(ioContext.getSystem().getLogger(),"eval", "eval",msg);
 	}
 
@@ -185,7 +224,7 @@ double eval::evaluate_interval(GP::Individual& inIndividual, GP::Context& ioCont
 
 	if(!traded)						// Penalize the rules that don't trade
 		return (double)0;
-	else if(money<iInvesticija)		// Or the ones that are bad (lose money)
+	else if(money<invest)		// Or the ones that are bad (lose money)
 		return (double)0;
 	else
 		return money/buyhold;
@@ -195,15 +234,15 @@ Fitness::Handle eval::evaluate(GP::Individual& inIndividual, GP::Context& ioCont
 { 
 	sqlite3 *database;
 	int rc;
-	
+
 	SQLITE_OPEN(rc,"",database)
 	
-	double interval_divider = 0.5;
+	double interval_divider = r_divider->getWrappedValue();
 
 	// Calculate the date that splits the dataset into 2 sets (training and validation)
 	string sql  = "SELECT DATE(DATETIME(";
-	sql        += "(STRFTIME('%s','" + start_date->getWrappedValue() + "') +";
-	sql        += "(STRFTIME('%s','" + end_date->getWrappedValue() + "') - STRFTIME('%s','" + start_date->getWrappedValue() + "'))*" + to_string<double>(interval_divider) + ")";
+	sql        += "(STRFTIME('%s','" + r_startdate->getWrappedValue() + "') +";
+	sql        += "(STRFTIME('%s','" + r_enddate->getWrappedValue() + "') - STRFTIME('%s','" + r_startdate->getWrappedValue() + "'))*" + to_string<double>(interval_divider) + ")";
 	sql        += ",'unixepoch'))";
 	
 //	std::cout << sql << std::endl;
@@ -216,20 +255,20 @@ Fitness::Handle eval::evaluate(GP::Individual& inIndividual, GP::Context& ioCont
 	sqlite3_close(database);				// Close the database
 
 	// Training set
-	interval_start = start_date->getWrappedValue();		// Starting date
+	interval_start = r_startdate->getWrappedValue();		// Starting date
 	interval_end   = intermediate_date;
 	double rule_train		= evaluate_interval(inIndividual, ioContext);
 	
 	// Validation set
 	interval_start = intermediate_date;
-	interval_end   = end_date->getWrappedValue();		// End date
+	interval_end   = r_enddate->getWrappedValue();		// End date
 	double rule_validation  = evaluate_interval(inIndividual, ioContext);
-		
+			
 	FitnessMultiObj::Handle lFitness = new FitnessMultiObj(2);	// 2 fitness values
-	(*lFitness)[0] = rule_train;								// Fitness on the train set
+	(*lFitness)[0] = rule_train;								// Fitness on the training set
 	(*lFitness)[1] = rule_validation;							// Fitness on the validation set
 	
-//	std::cout << start_date->getWrappedValue() << " - " << intermediate_date << " - " << end_date->getWrappedValue() << std::endl;
+//	std::cout << r_startdate->getWrappedValue() << " - " << intermediate_date << " - " << r_enddate->getWrappedValue() << std::endl;
 //	std::cout << "Training set: " << to_string<double>(rule_train) << ", validation set: " << to_string<double>(rule_validation) << std::endl;
 	
 	return lFitness;
