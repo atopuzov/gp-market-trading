@@ -50,7 +50,7 @@ int main()
 		
 		// Select all the data
 		//string sql_select_data  = "SELECT DATE(DATUM),PRVA,NAJVISA,NAJNIZA,ZADNJA FROM ZSE WHERE DIONICA='" + ticker + "';"; 		
-		string sql_select_data  = "SELECT DATE(DATUM),PROSJECNA FROM ZSE WHERE DIONICA='" + ticker + "';"; 
+		string sql_select_data  = "SELECT DATE(DATUM),ZADNJA FROM ZSE WHERE DIONICA='" + ticker + "';"; 
 		sqlite3_stmt *ps_select_data;
 		sqlite3_prepare( database, sql_select_data.c_str(), sql_select_data.size(), &ps_select_data, NULL );
 		
