@@ -47,7 +47,7 @@ void Avg::execute(GP::Datum& outDatum, GP::Context& ioContext)
 	std::ostringstream interval;
 	interval << lArg;
 
-	string sql = "SELECT AVG(PROSJECNA) FROM ZSE WHERE DIONICA=UPPER('";
+	string sql = "SELECT AVG(ZADNJA) FROM ZSE WHERE DIONICA=UPPER('";
 	sql       += aContext.dionica;				// Dionica
 	sql       += "') AND DATUM BETWEEN DATE('";
 	sql       += aContext.datum;

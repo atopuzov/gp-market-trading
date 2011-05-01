@@ -46,7 +46,7 @@ void Min::execute(GP::Datum& outDatum, GP::Context& ioContext)
 	std::ostringstream interval;
 	interval << lArg;
 
-	string sql = "SELECT MIN(PROSJECNA) FROM ZSE WHERE DIONICA=UPPER('";
+	string sql = "SELECT MIN(ZADNJA) FROM ZSE WHERE DIONICA=UPPER('";
 	sql       += aContext.dionica;				// Dionica
 	sql       += "') AND DATUM BETWEEN DATE('";
 	sql       += aContext.datum;
