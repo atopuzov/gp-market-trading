@@ -41,6 +41,7 @@ protected:
 	Beagle::Double::Handle	r_fee;			// Fee
 	Beagle::Double::Handle	r_invest;		// Investment
 	Beagle::Double::Handle	r_divider;		// Training/validation set interval divider
+	Beagle::Int::Handle						r_strategy;		// Compare to 1 B&H
 	
 	std::string interval_start;
 	std::string interval_end;

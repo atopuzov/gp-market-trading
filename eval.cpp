@@ -119,7 +119,19 @@ void eval::initialize(Beagle::System& ioSystem)
 			"0.8",
 			"Training/validation set interval divider");
 		ioSystem.getRegister().addEntry("aco.divider", r_divider, lDescription);
-	}		
+	}
+	
+	if(ioSystem.getRegister().isRegistered("aco.strategy")) {
+		r_strategy = castHandleT<Int>(ioSystem.getRegister()["aco.strategy"]);
+	} else {
+		r_strategy = new Int(1);
+		Register::Description lDescription(
+			"strategy",
+			"Integer",
+			"1",
+			"Strategy to compare to: 1 Buy&Hold 2 Random");
+		ioSystem.getRegister().addEntry("aco.strategy", r_divider, lDescription);
+	}
 }
 
 double eval::evaluate_interval(GP::Individual& inIndividual, GP::Context& ioContext)
@@ -150,15 +162,18 @@ double eval::evaluate_interval(GP::Individual& inIndividual, GP::Context& ioCont
 	sqlite3_stmt *preparedStatement;
 	SQLITE_PREPARE_STATEMENT_TEST(preparedStatement, sql, database);
 	
-	bool   trading_log        = r_log->getWrappedValue();
-	bool   on_the_market      = false;							// Indicates if we are already on the market
-	bool   traded             = false;							// Indicates if the rule did any transactions
-    double fee_factor         = r_fee->getWrappedValue();		// Factor that incorporates fee in the calculations
-	double invest             = r_invest->getWrappedValue();	// Initial ammount of money
-	double shares             = 0;								// Initial number of shares
-	double money              = invest;
-	double price_on_first_day = 0;						// Share price on the first day
-	double price_on_last_day  = 0;						// Share price on the last day
+	bool	trading_log			= r_log->getWrappedValue();
+	bool	on_the_market		= false;						// Indicates if we are already on the market
+	bool	on_the_market_rnd	= false;						// For random b&s rule
+	bool	traded				= false;						// Indicates if the rule did any transactions
+    double	fee_factor			= r_fee->getWrappedValue();		// Factor that incorporates fee in the calculations
+	double	invest				= r_invest->getWrappedValue();	// Initial ammount of money
+	double	shares				= 0;							// Initial number of shares
+	double	shares_rnd			= 0;							// For random b&s rule
+	double	money				= invest;						// Amount of money available
+	double	money_rnd			= invest;						// For random b&s rule
+	double	price_on_first_day = 0;						// Share price on the first day
+	double	price_on_last_day  = 0;						// Share price on the last day
 	
 	while ( (rc = sqlite3_step(preparedStatement)) == SQLITE_ROW ) {	// Loop trough all the records
 	
@@ -202,12 +217,25 @@ double eval::evaluate_interval(GP::Individual& inIndividual, GP::Context& ioCont
     		on_the_market = false;								// We are off the market
     	}
     	if(price_on_first_day==(double)0) price_on_first_day = vrjednost;
+
+		// Random buy & sell strategy
+		bool random_rule_signal = ioContext.getSystem().getRandomizer().rollInteger(0,1);
+		if(random_rule_signal && !on_the_market_rnd)  {			// Buy
+			shares_rnd = (money_rnd*fee_factor)/vrjednost;		// Calculate the number of shares
+	    	money_rnd			= 0;
+	    	on_the_market_rnd	= true;							// We are on the market now
+		} else if (!random_rule_signal && on_the_market_rnd ) {	// Sell
+			money_rnd = (shares_rnd*vrjednost)*fee_factor;		// Calculate the value
+			shares_rnd = 0;
+			on_the_market_rnd = false;							// We are off the market
+		}
 	}
 	
 	sqlite3_finalize(preparedStatement);						// Free resources
 	
-	if(shares!=(double)0) money = shares*price_on_last_day*fee_factor;										// Sell everything at the end
-	double buyhold = (price_on_last_day/price_on_first_day)*fee_factor*fee_factor*invest;		// Buy and hold strategy
+	if(shares		!= (double)0) money		= shares*price_on_last_day*fee_factor;			// Sell everything at the end
+	if(shares_rnd	!= (double)0) money_rnd	= shares_rnd*price_on_last_day*fee_factor;		// Random B&S strategy
+	double buyhold = (price_on_last_day/price_on_first_day)*fee_factor*fee_factor*invest;	// Buy and hold strategy
 	
 	if(trading_log) {
 		std::string msg = "Trgovano dionicom: " + aContext.dionica;
@@ -262,11 +290,11 @@ Fitness::Handle eval::evaluate(GP::Individual& inIndividual, GP::Context& ioCont
 	// Validation set
 	interval_start = intermediate_date;
 	interval_end   = r_enddate->getWrappedValue();		// End date
-	double rule_validation  = evaluate_interval(inIndividual, ioContext);
+//	double rule_validation  = evaluate_interval(inIndividual, ioContext);
 			
-	FitnessMultiObj::Handle lFitness = new FitnessMultiObj(2);	// 2 fitness values
+	FitnessMultiObj::Handle lFitness = new FitnessMultiObj(1);	// 2 fitness values
 	(*lFitness)[0] = rule_train;								// Fitness on the training set
-	(*lFitness)[1] = rule_validation;							// Fitness on the validation set
+//	(*lFitness)[1] = rule_validation;							// Fitness on the validation set
 	
 //	std::cout << r_startdate->getWrappedValue() << " - " << intermediate_date << " - " << r_enddate->getWrappedValue() << std::endl;
 //	std::cout << "Training set: " << to_string<double>(rule_train) << ", validation set: " << to_string<double>(rule_validation) << std::endl;
