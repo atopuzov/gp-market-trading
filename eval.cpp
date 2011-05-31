@@ -68,44 +68,18 @@ void eval::initialize(Beagle::System& ioSystem)
 			"Trading end date");
 		ioSystem.getRegister().addEntry("aco.e_date", r_enddate, lDescription);
 	}
-	
-	// Trading log
-	if(ioSystem.getRegister().isRegistered("aco.log")) {
-		r_log = castHandleT<Bool>(ioSystem.getRegister()["aco.log"]);
-	} else {
-		r_log = new Bool(false);
-		Register::Description lDescription(
-			"log",
-			"Bool",
-			"0",
-			"Trading log");
-		ioSystem.getRegister().addEntry("aco.log", r_log, lDescription);
-	}
-	
+		
 	// Fee (commision)
 	if(ioSystem.getRegister().isRegistered("aco.fee")) {
 		r_fee = castHandleT<Double>(ioSystem.getRegister()["aco.fee"]);
 	} else {
-		r_fee = new Double(0.995);
+		r_fee = new Double(0.025);
 		Register::Description lDescription(
 			"fee",
 			"Double",
-			"0.995",
-			"Factor to calculate in fee for every transaction");
+			"0.025",
+			"Transaction cost in percentage of the price");
 		ioSystem.getRegister().addEntry("aco.fee", r_fee, lDescription);
-	}
-	
-	// Amount of money to invest
-	if(ioSystem.getRegister().isRegistered("aco.invest")) {
-		r_invest = castHandleT<Double>(ioSystem.getRegister()["aco.invest"]);
-	} else {
-		r_invest = new Double(100000.);
-		Register::Description lDescription(
-			"invest",
-			"Double",
-			"100000",
-			"Investment ammount");
-		ioSystem.getRegister().addEntry("aco.invest", r_invest, lDescription);
 	}
 	
 	// Interval divider (for training and validation set)
@@ -129,7 +103,7 @@ void eval::initialize(Beagle::System& ioSystem)
 			"strategy",
 			"Integer",
 			"1",
-			"Strategy to compare to: 1 Buy&Hold 2 Random");
+			"Strategy to compare to: (1) Buy&Hold (2) Random");
 		ioSystem.getRegister().addEntry("aco.strategy", r_divider, lDescription);
 	}
 }
@@ -145,8 +119,6 @@ double eval::evaluate_interval(GP::Individual& inIndividual, GP::Context& ioCont
 	SQLITE_OPEN(rc,baza->getWrappedValue().c_str(),database);
 	
 	aContext.database = database;	// SQLite database
-	
-	//std::cout << "Ticker: " << aContext.dionica << std::endl;
 		
 	// SQL Query
 	string sql  = "SELECT DATUM,ZADNJA,KOLICINA FROM ZSE WHERE DIONICA=UPPER('";
@@ -162,144 +134,91 @@ double eval::evaluate_interval(GP::Individual& inIndividual, GP::Context& ioCont
 	sqlite3_stmt *preparedStatement;
 	SQLITE_PREPARE_STATEMENT_TEST(preparedStatement, sql, database);
 	
-	bool	trading_log			= r_log->getWrappedValue();
 	bool	on_the_market		= false;						// Indicates if we are already on the market
-	bool	on_the_market_rnd	= false;						// For random b&s rule
-	bool	traded				= false;						// Indicates if the rule did any transactions
-    double	fee_factor			= r_fee->getWrappedValue();		// Factor that incorporates fee in the calculations
-	double	invest				= r_invest->getWrappedValue();	// Initial ammount of money
-	double	shares				= 0;							// Initial number of shares
-	double	shares_rnd			= 0;							// For random b&s rule
-	double	money				= invest;						// Amount of money available
-	double	money_rnd			= invest;						// For random b&s rule
-	double	price_on_first_day = 0;						// Share price on the first day
-	double	price_on_last_day  = 0;						// Share price on the last day
+	bool	on_the_market_rnd	= false;						// For random b&s rule	
+	double	price_t					= 0;						// Price at day t
+	double	price_t_1				= 0;						// Price at dat t-1
+	double	transaction_cost		= r_fee->getWrappedValue();	// Transaction cost
+	double	r_r						= 0;						// Compound return for the generated rule
+	double	r_bh					= 0;						// Compound return for buy & hold rule
+	double	r_bs					= 0;						// Compound return for random buy & sell rule
+	int		number_of_trades		= 0;
+	int		number_of_trades_rnd	= 0;
 	
 	while ( (rc = sqlite3_step(preparedStatement)) == SQLITE_ROW ) {	// Loop trough all the records
 	
 		aContext.datum = (const char *)sqlite3_column_text(preparedStatement,0);	// Current date
 		
-		double vrjednost = sqlite3_column_double(preparedStatement,1);
-		setValue("C", (Beagle::Double)vrjednost, ioContext);	// Set price
+		double price = sqlite3_column_double(preparedStatement,1);
+		setValue("P", (Beagle::Double)price, ioContext);		// Set price
 		
-		double kolicina = sqlite3_column_double(preparedStatement,2);
-		setValue("V", (Beagle::Double)kolicina, ioContext);		// Set volume traded
+		double volume = sqlite3_column_double(preparedStatement,2);
+		setValue("V", (Beagle::Double)volume, ioContext);		// Set volume traded
+				
+		if(price_t == 0 && price_t_1 == 0)						// First evaluated day
+		{
+			price_t = price;									// price at day t
+		} else {
+			price_t_1	= price_t;								// price at day t/1
+			price_t		= price;								// price at day t
+			double	r_t = log(price_t) - log(price_t_1);		// daily continuously compounded return
+			if(on_the_market)		r_r  += r_t;				// Generated trading rule compound return
+			if(on_the_market_rnd)	r_bs += r_t;				// Random buy & sell rule compound return
+			r_bh += r_t;										// Buy & hold
+		}
 		
-		price_on_last_day = vrjednost;
-		
-		//std::cout << "Vrjednost: " << vrjednost << ", datum:" << aContext.datum << std::endl;
-
+		// Generated trading rule 
 		Bool trading_rule_signal;
 		inIndividual.run(trading_rule_signal, ioContext);		// Execute the rule
-		
 		// 1. If off the market and the signal is buy (true)   => buy
 		// 2. If on the market and the signal is buy (true)    => stay on market (don't sell)
 		// 3. If off the market and the signal is sell (false) => stay off the market (don't buy)
 		// 4. If on the market and the signal is sell (false)  => sell
 		if(trading_rule_signal && !on_the_market)  {			// Buy
-	    	shares = (money*fee_factor)/vrjednost;				// Calculate the number of shares
-			if(trading_log) {
-		    	std::string msg = "Date: " + aContext.datum + ", price: " + to_string<double>(vrjednost);
-		    	msg            += ",\tbuying: " + to_string<double>(shares) + "\tshares for: " + to_string<double>(money);
-		    	Beagle_LogBasicM(ioContext.getSystem().getLogger(),"eval", "eval",msg);
-    		}
-	    	money     = 0;
-	    	on_the_market = true;								// We are on the market now
-	    	traded        = true;								// We have traded at least once
-    	} else if (!trading_rule_signal && on_the_market ) {	// Sell
-    		money = (shares*vrjednost)*fee_factor;				// Calculate the value
-    		if(trading_log) {
-		    	std::string msg = "Date: " + aContext.datum + ", price: " + to_string<double>(vrjednost);
-		    	msg            += ",\tselling: " + to_string<double>(shares) + "\tshares for: " + to_string<double>(money);
-		    	Beagle_LogBasicM(ioContext.getSystem().getLogger(),"eval", "eval",msg);
-			}
-    		shares = 0;
-    		on_the_market = false;								// We are off the market
-    	}
-    	if(price_on_first_day==(double)0) price_on_first_day = vrjednost;
-
+			on_the_market	= true;								// We are on the market now
+		} else if (!trading_rule_signal && on_the_market ) {	// Sell
+			on_the_market	= false;							// We are off the market
+			++number_of_trades;
+		} // if
+		
 		// Random buy & sell strategy
 		bool random_rule_signal = ioContext.getSystem().getRandomizer().rollInteger(0,1);
 		if(random_rule_signal && !on_the_market_rnd)  {			// Buy
-			shares_rnd = (money_rnd*fee_factor)/vrjednost;		// Calculate the number of shares
-	    	money_rnd			= 0;
 	    	on_the_market_rnd	= true;							// We are on the market now
 		} else if (!random_rule_signal && on_the_market_rnd ) {	// Sell
-			money_rnd = (shares_rnd*vrjednost)*fee_factor;		// Calculate the value
-			shares_rnd = 0;
 			on_the_market_rnd = false;							// We are off the market
-		}
-	}
-	
+			++number_of_trades_rnd;
+		}	// if
+	}	// while
 	sqlite3_finalize(preparedStatement);						// Free resources
-	
-	if(shares		!= (double)0) money		= shares*price_on_last_day*fee_factor;			// Sell everything at the end
-	if(shares_rnd	!= (double)0) money_rnd	= shares_rnd*price_on_last_day*fee_factor;		// Random B&S strategy
-	double buyhold = (price_on_last_day/price_on_first_day)*fee_factor*fee_factor*invest;	// Buy and hold strategy
-	
-	if(trading_log) {
-		std::string msg = "Trgovano dionicom: " + aContext.dionica;
-		Beagle_LogBasicM(ioContext.getSystem().getLogger(),"eval", "eval",msg);
-		msg = "Price at the beginning of the interval: " + to_string<double>(price_on_first_day) + 
-			", at the end of the interval: " + to_string<double>(price_on_last_day);
-		Beagle_LogBasicM(ioContext.getSystem().getLogger(),"eval", "eval",msg);
-		msg = "Profit: generated rule: " + to_string<double>(money - invest) +
-			", buy_hold rule: " + to_string<double>(buyhold - invest);
-		Beagle_LogBasicM(ioContext.getSystem().getLogger(),"eval", "eval",msg);
-	}
-
 	sqlite3_close(database);		// Close the database
 
-	if(!traded)						// Penalize the rules that don't trade
-		return (double)0;
-	else if(money<invest)		// Or the ones that are bad (lose money)
-		return (double)0;
-	else
-		return money/buyhold;
+	if(on_the_market)		++number_of_trades;					// Sell all at the end
+	if(on_the_market_rnd)	++number_of_trades_rnd;
+	
+	double cost = log((1-transaction_cost)/(1+transaction_cost));	// Calculte in the transacion fees
+	r_r		+= number_of_trades * cost;
+//	r_bs	+= number_of_trades_rnd * cost;
+	r_bh	+= cost;
+
+	switch(r_strategy->getWrappedValue())
+	{
+		case	1:
+			break;
+		case	2:
+			return exp(r_r - r_bs);
+			break;
+	}
+	return exp(r_r - r_bh);
 }
+
 
 Fitness::Handle eval::evaluate(GP::Individual& inIndividual, GP::Context& ioContext)
 { 
-	sqlite3 *database;
-	int rc;
-
-	SQLITE_OPEN(rc,"",database)
-	
-	double interval_divider = r_divider->getWrappedValue();
-
-	// Calculate the date that splits the dataset into 2 sets (training and validation)
-	string sql  = "SELECT DATE(DATETIME(";
-	sql        += "(STRFTIME('%s','" + r_startdate->getWrappedValue() + "') +";
-	sql        += "(STRFTIME('%s','" + r_enddate->getWrappedValue() + "') - STRFTIME('%s','" + r_startdate->getWrappedValue() + "'))*" + to_string<double>(interval_divider) + ")";
-	sql        += ",'unixepoch'))";
-	
-//	std::cout << sql << std::endl;
-	
-	sqlite3_stmt *preparedStatement;
-	SQLITE_PREPARE_STATEMENT_TEST(preparedStatement, sql, database);
-	SQLITE_STEP_TEST(preparedStatement);
-	std::string  intermediate_date = (const char *)sqlite3_column_text(preparedStatement,0);
-	sqlite3_finalize(preparedStatement);	// Free resources
-	sqlite3_close(database);				// Close the database
-
-	// Training set
-	interval_start = r_startdate->getWrappedValue();		// Starting date
-	interval_end   = intermediate_date;
-	double rule_train		= evaluate_interval(inIndividual, ioContext);
-	
-	// Validation set
-	interval_start = intermediate_date;
-	interval_end   = r_enddate->getWrappedValue();		// End date
-//	double rule_validation  = evaluate_interval(inIndividual, ioContext);
-			
-	FitnessMultiObj::Handle lFitness = new FitnessMultiObj(1);	// 2 fitness values
-	(*lFitness)[0] = rule_train;								// Fitness on the training set
-//	(*lFitness)[1] = rule_validation;							// Fitness on the validation set
-	
-//	std::cout << r_startdate->getWrappedValue() << " - " << intermediate_date << " - " << r_enddate->getWrappedValue() << std::endl;
-//	std::cout << "Training set: " << to_string<double>(rule_train) << ", validation set: " << to_string<double>(rule_validation) << std::endl;
-	
-	return lFitness;
+	interval_start	= r_startdate->getWrappedValue();				// Starting date
+	interval_end	= r_enddate->getWrappedValue();					// End date
+	double eval		= evaluate_interval(inIndividual, ioContext);	// Calculate the fitness
+	return new FitnessSimple(eval);
 }
 
 void eval::postInit(System& ioSystem)
