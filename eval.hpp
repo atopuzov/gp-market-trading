@@ -15,33 +15,36 @@
 class eval : public Beagle::GP::EvaluationOp {
 
 public:
+	//! eval allocator type.
+	typedef Beagle::AllocatorT<eval,Beagle::GP::EvaluationOp::Alloc> Alloc;
+	//!< eval handle type.
+	typedef Beagle::PointerT<eval,Beagle::GP::EvaluationOp::Handle> Handle;
+	//!< eval bag type.
+	typedef Beagle::ContainerT<eval,Beagle::GP::EvaluationOp::Bag> Bag;
 
-  //! eval allocator type.
-  typedef Beagle::AllocatorT<eval,Beagle::GP::EvaluationOp::Alloc> Alloc;
-  //!< eval handle type.
-  typedef Beagle::PointerT<eval,Beagle::GP::EvaluationOp::Handle> Handle;
-  //!< eval bag type.
-  typedef Beagle::ContainerT<eval,Beagle::GP::EvaluationOp::Bag> Bag;
+	explicit eval();
 
-  explicit eval();
-
-  virtual void initialize(Beagle::System& ioSystem);
-  virtual Beagle::Fitness::Handle evaluate(Beagle::GP::Individual& inIndividual,
+	virtual void initialize(Beagle::System& ioSystem);
+	virtual Beagle::Fitness::Handle evaluate(Beagle::GP::Individual& inIndividual,
                                            Beagle::GP::Context& ioContext);
-  virtual void postInit(Beagle::System& ioSystem);
+	virtual void postInit(Beagle::System& ioSystem);
+
+	void set_training_interval();
+	void set_validation_interval();
+
 
 protected:
 	double evaluate_interval(Beagle::GP::Individual& inIndividual, Beagle::GP::Context& ioContext);
+	void set_testing_interval(std::string start, std::string end);
 	
-	Beagle::String::Handle	baza;			// Ime baze
-	Beagle::String::Handle	dionica;		// Ime dionice
-	Beagle::String::Handle	r_startdate;	// First day of trading
-	Beagle::String::Handle	r_enddate;		// Last day of trading
-	Beagle::Bool::Handle    r_log;			// Log trgovanja
+	Beagle::String::Handle	r_database;		// Database filename
+	Beagle::String::Handle	r_ticker;		// Stock symbol
 	Beagle::Double::Handle	r_fee;			// Fee
-	Beagle::Double::Handle	r_invest;		// Investment
-	Beagle::Double::Handle	r_divider;		// Training/validation set interval divider
-	Beagle::Int::Handle						r_strategy;		// Compare to 1 B&H
+	Beagle::Int::Handle		r_strategy;		// Compare to 1 B&H 2 random B&S
+	Beagle::String::Handle	r_ts_date;		// Training interval start date
+	Beagle::String::Handle	r_te_date;		// Training interval end date
+	Beagle::String::Handle	r_vs_date;		// Validation interval start date
+	Beagle::String::Handle	r_ve_date;		// Validation interval end date
 	
 	std::string interval_start;
 	std::string interval_end;
