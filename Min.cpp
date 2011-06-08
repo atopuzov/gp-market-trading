@@ -46,7 +46,7 @@ void Min::execute(GP::Datum& outDatum, GP::Context& ioContext)
 	std::ostringstream interval;
 	interval << lArg;
 
-	string sql = "SELECT MIN(PROSJECNA) FROM ZSE WHERE DIONICA=UPPER('";
+	string sql = "SELECT MIN(ZADNJA) FROM ZSE WHERE DIONICA=UPPER('";
 	sql       += aContext.dionica;				// Dionica
 	sql       += "') AND DATUM BETWEEN DATE('";
 	sql       += aContext.datum;
@@ -59,16 +59,9 @@ void Min::execute(GP::Datum& outDatum, GP::Context& ioContext)
 	//std::cout << sql << std::endl;
 
 	sqlite3_stmt *preparedStatement;
-	if ( sqlite3_prepare( database, sql.c_str(), sql.size(), &preparedStatement, NULL ) != SQLITE_OK )
-	{
-		std::cout << "Ne mogu prirediti SQL upit!\n" << std::endl;
-		throw "Ne mogu prirediti SQL upit!\n";
-	}
-	if ( sqlite3_step(preparedStatement) != SQLITE_ROW )
-	{
-		std::cout << "Ne mogu vratiti vjednost SQL upita!\n" << std::endl;
-		throw "Ne mogu vratiti vjednost SQL upita!\n";
-	}
+	SQLITE_PREPARE_STATEMENT_TEST(preparedStatement, sql, database);
+	SQLITE_STEP_TEST(preparedStatement);
+	
 	lResult = sqlite3_column_double(preparedStatement,0);
 	sqlite3_finalize(preparedStatement);
 	//std::cout << "AVG:" << lResult << std::endl;

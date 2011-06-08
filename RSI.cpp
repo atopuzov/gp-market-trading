@@ -72,28 +72,18 @@ void RSI::execute(GP::Datum& outDatum, GP::Context& ioContext)
 	//std::cout << sql << "\n\n" << sql2 << std::endl;
 
 	sqlite3_stmt *preparedStatement;
-	if ( sqlite3_prepare( database, sql.c_str(), sql.size(), &preparedStatement, NULL ) != SQLITE_OK ) 	{
-		std::cout << "Ne mogu prirediti SQL upit!\n" << std::endl;
-		throw "Ne mogu prirediti SQL upit!\n";
-	}
-	if ( sqlite3_step(preparedStatement) != SQLITE_ROW ) {
-		std::cout << "Ne mogu vratiti vjednost SQL1 upita!\n" << std::endl;
-		throw "Ne mogu vratiti vjednost SQL1 upita!\n";
-	}
+	SQLITE_PREPARE_STATEMENT_TEST(preparedStatement, sql, database);
+	SQLITE_STEP_TEST(preparedStatement);
 	double close_ndaysago = sqlite3_column_double(preparedStatement,0);	// Closing price n days ago
 	sqlite3_finalize(preparedStatement);
 	
 	sqlite3_stmt *preparedStatement2;	
-	if ( sqlite3_prepare( database, sql2.c_str(), sql2.size(), &preparedStatement2, NULL ) != SQLITE_OK ) {
-		std::cout << "Ne mogu prirediti SQL upit!\n" << std::endl;
-		throw "Ne mogu prirediti SQL upit!\n";
-	}
-	if ( sqlite3_step(preparedStatement2) != SQLITE_ROW ) {
-		std::cout << "Ne mogu vratiti vjednost SQL2 upita!\n" << std::endl;
-		throw "Ne mogu vratiti vjednost SQL2 upita!\n";
-	}
-	double close_today = sqlite3_column_double(preparedStatement2,0);	// Closing price of current day
+	SQLITE_PREPARE_STATEMENT_TEST(preparedStatement2, sql2, database);
+	SQLITE_STEP_TEST(preparedStatement2);
+	double close_today = sqlite3_column_double(preparedStatement2,0);	// Closing price on the current day
 	sqlite3_finalize(preparedStatement2);
+	
+	double u,d;
 	if(close_today>close_ndaysago)
 	{
 		u = close_today - close_ndaysago;
@@ -107,7 +97,7 @@ void RSI::execute(GP::Datum& outDatum, GP::Context& ioContext)
 		u = 0;
 		d = 0;
 	}
-	lResult = 100 - 100 / (1)
+	lResult = 100 - 100 / (1);
 	
 //	std::cout << "RSI:" << lResult << std::endl;
 }

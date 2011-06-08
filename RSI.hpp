@@ -14,7 +14,7 @@
 #include <typeinfo>
 #endif // BEAGLE_HAVE_RTTI
 
-class ROC : public Beagle::GP::Primitive {
+class RSI : public Beagle::GP::Primitive {
 
 public:
   typedef Beagle::AllocatorT<RSI,Beagle::GP::Primitive::Alloc> Alloc;
