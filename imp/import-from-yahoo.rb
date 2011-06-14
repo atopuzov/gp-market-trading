@@ -45,7 +45,7 @@ def download(options, db)
   ed = /(\d{1,2})\.(\d{1,2})\.(\d{2,4})\.?/.match(options[:dateend])
   url = "http://ichart.finance.yahoo.com/table.csv?s=" + options[:ticker] + \
         "&a=" + (sd[2].to_i-1).to_s + "&b=" + sd[1] + "&c=" + sd[3] + \
-        "&d=" + (ed[2].to_i-1).to_s + "&e=" + ed[1] + "&f=" + ed[3] + \ 
+        "&d=" + (ed[2].to_i-1).to_s + "&e=" + ed[1] + "&f=" + ed[3] + \
         "&g=d&ignore=.csv"
 
  f = open(url)                                         # Download data
