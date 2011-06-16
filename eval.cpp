@@ -26,11 +26,11 @@ void eval::initialize(Beagle::System& ioSystem)
 			"String",
 			"se.db",
 			"Name of the database file.");
-		ioSystem.getRegister().addEntry("trading.baza", r_database, lDescription);
+		ioSystem.getRegister().addEntry("trading.database", r_database, lDescription);
 	}
 
 	// Ime dionice
-	if(ioSystem.getRegister().isRegistered("trading.ticer")) {
+	if(ioSystem.getRegister().isRegistered("trading.ticker")) {
 		r_ticker = castHandleT<String>(ioSystem.getRegister()["trading.ticker"]);
 	} else {
 		r_ticker = new String("PBZ-R-A");
@@ -38,7 +38,7 @@ void eval::initialize(Beagle::System& ioSystem)
 			"Ticker",
 			"String",
 			"PBZ-R-A",
-			"Dionica kojom se trguje");
+			"Stock ticker symbol");
 		ioSystem.getRegister().addEntry("trading.ticker", r_ticker, lDescription);
 	}
 
@@ -162,9 +162,11 @@ double eval::evaluate_interval(GP::Individual& inIndividual, GP::Context& ioCont
 		
 		double price = sqlite3_column_double(preparedStatement,1);
 		setValue("P", (Beagle::Double)price, ioContext);		// Set price
+//		std::cout << "Price: " << price << std::endl;
 		
 		double volume = sqlite3_column_double(preparedStatement,2);
 		setValue("V", (Beagle::Double)volume, ioContext);		// Set trading volume
+//		std::cout << "Volume: " << volume << std::endl;
 				
 		if(price_t_1 == 0 && price_t == 0) {					// First evaluated day
 			price_t = price;									// price at day t
@@ -186,8 +188,10 @@ double eval::evaluate_interval(GP::Individual& inIndividual, GP::Context& ioCont
 		// 4. If on the market and the signal is sell (false)  => sell
 		if(trading_rule_signal && !on_the_market)  {			// Buy
 			on_the_market	= true;								// We are on the market now
+//			std::cout << "Bought!" << std::endl;
 		} else if (!trading_rule_signal && on_the_market ) {	// Sell
 			on_the_market	= false;							// We are off the market
+//			std::cout << "Sold!" << std::endl;
 			++number_of_trades;
 		} // if
 		
