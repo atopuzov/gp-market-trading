@@ -15,13 +15,14 @@ void Beagle::GP::aco::StatsCalcComplex::calculateStatsDeme(Beagle::Stats& outSta
 															Beagle::Context& ioContext) const
 {
 	// TODO - calculate statistics for validation set
-//	outStats[x].mId  = "fitness2";
-//	outStats[x].mAvg = 0.0;
-//	outStats[x].mStd = 0.0;
-//	outStats[x].mMax = 0.0;
-//	outStats[x].mMin = 0.0;
+	outStats.resize(4);
+	outStats[3].mId  = "fitness2";
+	outStats[3].mAvg = 0.0;
+	outStats[3].mStd = 0.0;
+	outStats[3].mMax = 0.0;
+	outStats[3].mMin = 0.0;
     
-	std::cout << "Kalkuliram statistike!" << std::endl;
+	std::cout << "TODO - calculate statistics for validation set!" << std::endl;
 }
 
 
