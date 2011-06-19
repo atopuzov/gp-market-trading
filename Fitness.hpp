@@ -2,8 +2,8 @@
  * (c) 2008-2011 Aleksandar Topuzović                                      *
  * <aleksandar.topuzovic@fer.hr>, <aleksandar.topuzovic@gmail.com>         *
  ***************************************************************************/
-#ifndef fit_hpp
-#define fit_hpp
+#ifndef fitness_hpp
+#define fitness_hpp
 
 #include <beagle/Beagle.hpp>
 #include <beagle/AllocatorT.hpp>
@@ -61,4 +61,4 @@ protected:
 
 }
 
-#endif // fit_hpp
+#endif // fitness_hpp

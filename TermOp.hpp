@@ -23,7 +23,7 @@ public:
 	typedef Beagle::ContainerT<trading::TermOp,Beagle::TerminationOp::Bag>
 			Bag;
 
-	explicit TermOp(Beagle::string inName="TermComplex");
+	explicit TermOp(Beagle::string inName="TermOp");
 	virtual ~TermOp() { }
 
 	virtual bool terminate(const Beagle::Deme& inDeme, Beagle::Context& ioContext);

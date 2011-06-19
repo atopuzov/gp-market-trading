@@ -2,7 +2,7 @@
  * (c) 2008-2011 Aleksandar Topuzović                                      *
  * <aleksandar.topuzovic@fer.hr>, <aleksandar.topuzovic@gmail.com>         *
  ***************************************************************************/
-#include "fit.hpp"
+#include "Fitness.hpp"
 #include <cfloat>
 #include <cmath>
 #include <algorithm>

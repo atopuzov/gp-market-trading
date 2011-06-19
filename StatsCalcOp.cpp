@@ -5,8 +5,8 @@
 #include <beagle/GP.hpp>
 #include <beagle/macros.hpp>
 #include <cmath>
-#include "stats.hpp"
-#include "fit.hpp"
+#include "StatsCalcOp.hpp"
+#include "Fitness.hpp"
 
 using namespace trading;
 

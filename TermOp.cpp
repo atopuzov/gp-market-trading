@@ -2,7 +2,7 @@
  * (c) 2008-2011 Aleksandar Topuzović                                      *
  * <aleksandar.topuzovic@fer.hr>, <aleksandar.topuzovic@gmail.com>         *
  ***************************************************************************/
-#include "term.hpp"
+#include "TermOp.hpp"
 
 using namespace trading;
 
