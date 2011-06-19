@@ -7,23 +7,22 @@
 
 namespace trading {
 
-class StatsCalcComplex : public Beagle::GP::StatsCalcFitnessSimpleOp {
+class StatsCalcOp : public Beagle::GP::StatsCalcFitnessSimpleOp {
 
 public:
 
 	//! StatsCalcComplex allocator type
-	typedef Beagle::AllocatorT<trading::StatsCalcComplex,Beagle::GP::StatsCalcFitnessSimpleOp::Alloc>
+	typedef Beagle::AllocatorT<trading::StatsCalcOp, Beagle::GP::StatsCalcFitnessSimpleOp::Alloc>
 		Alloc;
 	//! StatsCalcComplex handle type.
-	typedef Beagle::PointerT<trading::StatsCalcComplex,Beagle::GP::StatsCalcFitnessSimpleOp::Handle>
+	typedef Beagle::PointerT<trading::StatsCalcOp, Beagle::GP::StatsCalcFitnessSimpleOp::Handle>
 		Handle;
 	//! StatsCalcComplex bag type.
-	typedef Beagle::ContainerT<trading::StatsCalcComplex,Beagle::GP::StatsCalcFitnessSimpleOp::Bag>
+	typedef Beagle::ContainerT<trading::StatsCalcOp, Beagle::GP::StatsCalcFitnessSimpleOp::Bag>
 		Bag;
-//	virtual void initialize(Beagle::System& ioSystem);
 
-	explicit StatsCalcComplex(Beagle::string inName="GP-StatsCalcComplex");
-	virtual ~StatsCalcComplex() { }
+	explicit StatsCalcOp(Beagle::string inName="GP-StatsCalcTrading");
+	virtual ~StatsCalcOp() { }
 
 	virtual void calculateStatsDeme(Beagle::Stats& outStats,
 									Beagle::Deme& ioDeme,

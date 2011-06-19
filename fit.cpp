@@ -9,29 +9,29 @@
 
 using namespace trading;
 
-FitnessTrading::FitnessTrading() :
+Fitness::Fitness() :
 	Beagle::FitnessSimple(false)
 {	}
 
 
-FitnessTrading::FitnessTrading(float inFitness) :
+Fitness::Fitness(float inFitness) :
 	Beagle::FitnessSimple(true)
 {
 	setValue(inFitness);
 }
 
-FitnessTrading::FitnessTrading(float inFitness1, float inFitness2) :
+Fitness::Fitness(float inFitness1, float inFitness2) :
 	Beagle::FitnessSimple(true)
 {
 	setValue(inFitness1, inFitness2);
 }
 
-void FitnessTrading::setValue(float inFitness)
+void Fitness::setValue(float inFitness)
 {
 	setValue(inFitness, 0);
 }
 
-void FitnessTrading::setValue(float inFitness1, float inFitness2)
+void Fitness::setValue(float inFitness1, float inFitness2)
 {
 	// Training set fitness
 	if(Beagle::isFinite(inFitness1)) mFitness = inFitness1;
@@ -42,7 +42,7 @@ void FitnessTrading::setValue(float inFitness1, float inFitness2)
 	setValid();
 }
 
-void FitnessTrading::read(PACC::XML::ConstIterator inIter)
+void Fitness::read(PACC::XML::ConstIterator inIter)
 {
 	if((inIter->getType()!=PACC::XML::eData) || (inIter->getValue()!="Fitness"))
 		throw Beagle_IOExceptionNodeM(*inIter, "tag <Fitness> expected!");
@@ -69,7 +69,7 @@ void FitnessTrading::read(PACC::XML::ConstIterator inIter)
 	}
 }
 
-void FitnessTrading::write(PACC::XML::Streamer& ioStreamer, bool inIndent) const
+void Fitness::write(PACC::XML::Streamer& ioStreamer, bool inIndent) const
 {
 	ioStreamer.openTag("Fitness", inIndent);
 	ioStreamer.insertAttribute("type", "trading");

@@ -15,24 +15,24 @@
 
 namespace trading {
 
-class FitnessTrading : public Beagle::FitnessSimple {
+class Fitness : public Beagle::FitnessSimple {
 
 public:
 
-	//! FitnessTrading allocator type.
-	typedef Beagle::AllocatorT<trading::FitnessTrading,Beagle::FitnessSimple::Alloc>
+	//! Fitness allocator type.
+	typedef Beagle::AllocatorT<trading::Fitness,Beagle::FitnessSimple::Alloc>
 		Alloc;
-	//! FitnessTrading handle type.
-	typedef Beagle::PointerT<trading::FitnessTrading,Beagle::FitnessSimple::Handle>
+	//! Fitness handle type.
+	typedef Beagle::PointerT<trading::Fitness,Beagle::FitnessSimple::Handle>
 		Handle;
-	//! FitnessTrading bag type.
-	typedef Beagle::ContainerT<trading::FitnessTrading,Beagle::FitnessSimple::Bag>
+	//! Fitness bag type.
+	typedef Beagle::ContainerT<trading::Fitness,Beagle::FitnessSimple::Bag>
 		Bag;
 	
-			FitnessTrading();
-	explicit FitnessTrading(float inFitness);
-	explicit FitnessTrading(float inFitness1, float inFitness2);
-	virtual ~FitnessTrading() { }
+			Fitness();
+	explicit Fitness(float inFitness);
+	explicit Fitness(float inFitness1, float inFitness2);
+	virtual ~Fitness() { }
   
 	inline float getValue() const
 	{
