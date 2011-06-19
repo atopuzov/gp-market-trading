@@ -122,7 +122,7 @@ void eval::initialize(Beagle::System& ioSystem)
 
 double eval::evaluate_interval(GP::Individual& inIndividual, GP::Context& ioContext)
 {
-	Beagle::GP::aco::Context& aContext = castObjectT<Beagle::GP::aco::Context&>(ioContext);
+	trading::Context& aContext = castObjectT<trading::Context&>(ioContext);
 	aContext.dionica = r_ticker->getWrappedValue();
 
     sqlite3 *database;											// Sqlite database
