@@ -1,27 +1,28 @@
-
+/***************************************************************************
+ * (c) 2008-2011 Aleksandar Topuzović                                      *
+ * <aleksandar.topuzovic@fer.hr>, <aleksandar.topuzovic@gmail.com>         *
+ ***************************************************************************/
 #ifndef stats_hpp
 #define stats_hpp
 
-namespace Beagle {
-namespace GP {
-namespace aco {
+namespace trading {
 
 class StatsCalcComplex : public Beagle::GP::StatsCalcFitnessSimpleOp {
 
 public:
 
 	//! StatsCalcComplex allocator type
-	typedef AllocatorT<StatsCalcComplex,Beagle::GP::aco::StatsCalcComplex::Alloc>
+	typedef Beagle::AllocatorT<trading::StatsCalcComplex,Beagle::GP::StatsCalcFitnessSimpleOp::Alloc>
 		Alloc;
 	//! StatsCalcComplex handle type.
-	typedef PointerT<StatsCalcComplex,Beagle::GP::aco::StatsCalcComplex::Handle>
+	typedef Beagle::PointerT<trading::StatsCalcComplex,Beagle::GP::StatsCalcFitnessSimpleOp::Handle>
 		Handle;
 	//! StatsCalcComplex bag type.
-	typedef ContainerT<StatsCalcComplex,Beagle::GP::aco::StatsCalcComplex::Bag>
+	typedef Beagle::ContainerT<trading::StatsCalcComplex,Beagle::GP::StatsCalcFitnessSimpleOp::Bag>
 		Bag;
 //	virtual void initialize(Beagle::System& ioSystem);
 
-	explicit StatsCalcComplex(string inName="GP-StatsCalcComplex");
+	explicit StatsCalcComplex(Beagle::string inName="GP-StatsCalcComplex");
 	virtual ~StatsCalcComplex() { }
 
 	virtual void calculateStatsDeme(Beagle::Stats& outStats,
@@ -30,6 +31,5 @@ public:
 };
 
 }
-}
-}
+
 #endif // stats_hpp

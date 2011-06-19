@@ -1,34 +1,35 @@
+/***************************************************************************
+ * (c) 2008-2011 Aleksandar Topuzović                                      *
+ * <aleksandar.topuzovic@fer.hr>, <aleksandar.topuzovic@gmail.com>         *
+ ***************************************************************************/
 #ifndef term_hpp
 #define term_hpp
 
 #include "beagle/TerminationOp.hpp"
 
-
-namespace Beagle {
-namespace aco {
+namespace trading {
 
 class TermComplex : public Beagle::TerminationOp {
 
 public:
 
 	//! TermComplex allocator type
-	typedef AllocatorT<TermComplex,TerminationOp::Alloc>
+	typedef Beagle::AllocatorT<trading::TermComplex,Beagle::TerminationOp::Alloc>
 			Alloc;
 	//! TermComplex handle type.
-	typedef PointerT<TermComplex,TerminationOp::Handle>
+	typedef Beagle::PointerT<trading::TermComplex,Beagle::TerminationOp::Handle>
 			Handle;
 	//! TermComplex bag type.
-	typedef ContainerT<TermComplex,TerminationOp::Bag>
+	typedef Beagle::ContainerT<trading::TermComplex,Beagle::TerminationOp::Bag>
 			Bag;
 
-	explicit TermComplex(string inName="TermComplex");
+	explicit TermComplex(Beagle::string inName="TermComplex");
 	virtual ~TermComplex() { }
 
-	virtual bool terminate(const Deme& inDeme, Context& ioContext);
+	virtual bool terminate(const Beagle::Deme& inDeme, Beagle::Context& ioContext);
 
 };
 
-}
 }
 
 #endif // term_hpp

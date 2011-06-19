@@ -8,9 +8,9 @@
 #include <cmath>
 #include <fstream>
 
-using namespace Beagle;
+using namespace trading;
 
-Beagle::GP::aco::Context::Context() : 
+Context::Context() : 
  datum(""),
  dionica(""),
  database(NULL)

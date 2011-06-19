@@ -10,29 +10,24 @@
 #include "beagle/GP/Context.hpp"
 #include "sqlite3.h"
 
-
-namespace Beagle {
-namespace GP {
-namespace aco {
+namespace trading {
 
 class Context : public Beagle::GP::Context {
 
 public:
 
-  typedef AllocatorT<Context,Beagle::GP::Context::Alloc> Alloc;
-  typedef PointerT<Context,Beagle::GP::Context::Handle> Handle;
-  typedef ContainerT<Context,Beagle::GP::Context::Bag> Bag;
+	typedef Beagle::AllocatorT<trading::Context,Beagle::GP::Context::Alloc> Alloc;
+	typedef Beagle::PointerT<trading::Context,Beagle::GP::Context::Handle> Handle;
+	typedef Beagle::ContainerT<trading::Context,Beagle::GP::Context::Bag> Bag;
 
-           Context();
-  virtual ~Context() { }
+			 Context();
+	virtual ~Context() { }
 
-  string	datum;			// Datum
-  string	dionica;		// Dionica
-  sqlite3	*database;		// SQLite baza podataka
+	std::string	datum;			// Datum
+	std::string	dionica;		// Dionica
+	sqlite3	*database;		// SQLite database
 };
 
-}
-}
 }
 
 #endif // specContext_hpp

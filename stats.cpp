@@ -1,16 +1,17 @@
+/***************************************************************************
+ * (c) 2008-2011 Aleksandar Topuzović                                      *
+ * <aleksandar.topuzovic@fer.hr>, <aleksandar.topuzovic@gmail.com>         *
+ ***************************************************************************/
 #include "beagle/GP.hpp"
 #include "stats.hpp"
 
-Beagle::GP::aco::StatsCalcComplex::StatsCalcComplex(Beagle::string inName) :
+using namespace trading;
+
+StatsCalcComplex::StatsCalcComplex(Beagle::string inName) :
   Beagle::GP::StatsCalcFitnessSimpleOp(inName)
 { }
 
-//void Beagle::GP::aco::StatsCalcComplex::initialize(Beagle::System& ioSystem)
-//{
-//	Beagle::StatsCalculate::initialize(ioSystem);
-//}
-
-void Beagle::GP::aco::StatsCalcComplex::calculateStatsDeme(Beagle::Stats& outStats,
+void StatsCalcComplex::calculateStatsDeme(Beagle::Stats& outStats,
 															Beagle::Deme& ioDeme,
 															Beagle::Context& ioContext) const
 {
@@ -24,5 +25,3 @@ void Beagle::GP::aco::StatsCalcComplex::calculateStatsDeme(Beagle::Stats& outSta
     
 	std::cout << "TODO - calculate statistics for validation set!" << std::endl;
 }
-
-

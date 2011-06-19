@@ -39,7 +39,7 @@ void Avg::execute(GP::Datum& outDatum, GP::Context& ioContext)
 	Double& lResult = castObjectT<Double&>(outDatum);
 	UInt lArg;
 	get1stArgument(lArg, ioContext); 
-	Beagle::GP::aco::Context& aContext = castObjectT<Beagle::GP::aco::Context&>(ioContext);
+	trading::Context& aContext = castObjectT<trading::Context&>(ioContext);
 
 	sqlite3 *database;		// Baza podataka  
 	database = aContext.database;
