@@ -4,6 +4,7 @@
  ***************************************************************************/
 #include "beagle/GP.hpp"
 #include "eval.hpp"
+#include "fit.hpp"
 #include <cmath>
 
 using namespace Beagle;
@@ -236,11 +237,14 @@ double eval::evaluate_interval(GP::Individual& inIndividual, GP::Context& ioCont
 
 Fitness::Handle eval::evaluate(GP::Individual& inIndividual, GP::Context& ioContext)
 {
-	if(interval_start == "" || interval_end == "")
-		set_training_interval();
+//	if(interval_start == "" || interval_end == "")
 
-	double eval		= evaluate_interval(inIndividual, ioContext);	// Calculate the fitness
-	return new FitnessSimple(eval);
+	set_training_interval();
+	double eval1		= evaluate_interval(inIndividual, ioContext);	// Calculate the fitness
+	set_validation_interval();
+	double eval2		= evaluate_interval(inIndividual, ioContext);	// Calculate the fitness
+	std::cout << eval1 << "\t" << eval2 << std::endl;
+	return new trading::Fitness(eval1,eval2);
 }
 
 void eval::set_testing_interval(std::string start, std::string end)
