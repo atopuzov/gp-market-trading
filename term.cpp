@@ -6,14 +6,13 @@
 
 using namespace trading;
 
-TermComplex::TermComplex(Beagle::string inName) :
+TermOp::TermOp(Beagle::string inName) :
   TerminationOp(inName)
-{ }
+{	}
 
-bool TermComplex::terminate(const Beagle::Deme& inDeme, Beagle::Context& ioContext)
+bool TermOp::terminate(const Beagle::Deme& inDeme, Beagle::Context& ioContext)
 {
 	// TODO - do complex criteria termination
 	std::cout << "TODO - do complex criteria termination" << std::endl;
 	return true;
 }
-

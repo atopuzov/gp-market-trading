@@ -9,22 +9,22 @@
 
 namespace trading {
 
-class TermComplex : public Beagle::TerminationOp {
+class TermOp : public Beagle::TerminationOp {
 
 public:
 
-	//! TermComplex allocator type
-	typedef Beagle::AllocatorT<trading::TermComplex,Beagle::TerminationOp::Alloc>
+	//! TermOp allocator type
+	typedef Beagle::AllocatorT<trading::TermOp,Beagle::TerminationOp::Alloc>
 			Alloc;
-	//! TermComplex handle type.
-	typedef Beagle::PointerT<trading::TermComplex,Beagle::TerminationOp::Handle>
+	//! TermOp handle type.
+	typedef Beagle::PointerT<trading::TermOp,Beagle::TerminationOp::Handle>
 			Handle;
-	//! TermComplex bag type.
-	typedef Beagle::ContainerT<trading::TermComplex,Beagle::TerminationOp::Bag>
+	//! TermOp bag type.
+	typedef Beagle::ContainerT<trading::TermOp,Beagle::TerminationOp::Bag>
 			Bag;
 
-	explicit TermComplex(Beagle::string inName="TermComplex");
-	virtual ~TermComplex() { }
+	explicit TermOp(Beagle::string inName="TermComplex");
+	virtual ~TermOp() { }
 
 	virtual bool terminate(const Beagle::Deme& inDeme, Beagle::Context& ioContext);
 
