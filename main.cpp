@@ -5,6 +5,9 @@
 #include "beagle/GP.hpp"
 #include "eval.hpp"
 #include "Primitives.hpp"
+#include "StatsCalcOp.hpp"
+#include "TermOp.hpp"
+#include "Fitness.hpp"
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -26,36 +29,55 @@ int main(int argc, char *argv[]) {
 		AddPrimitives(lSet);	// Add primitives
 		
 		// 2. Build a system.
-		aco::Context::Alloc::Handle lContextAlloc = new aco::Context::Alloc();
+		trading::Context::Alloc::Handle lContextAlloc = new trading::Context::Alloc();
 		GP::System::Handle lSystem = new GP::System(lSet, lContextAlloc);
 		
 		// 3. Evaluation operator
 		eval::Handle lEvalOp = new eval;
-	
+		
 		// 4. Build an evolver and a vivarium.
 		GP::Evolver::Handle lEvolver = new GP::Evolver(lEvalOp);
-		GP::Vivarium::Handle lVivarium = new GP::Vivarium;
+		trading::StatsCalcOp::Handle lStatsCalcOp = new trading::StatsCalcOp;	// Modified statistics operator
+		lEvolver->addOperator(lStatsCalcOp);									// Add new statistics calculation operator
+		trading::TermOp::Handle lTermOp = new trading::TermOp;					// Modified termination operator
+		lEvolver->addOperator(lTermOp);											// Add new termination operator
+		
+		// Build vivarium
+		GP::Tree::Alloc::Handle lTreeAlloc = new GP::Tree::Alloc;
+		trading::Fitness::Alloc::Handle lFitnessAlloc = new trading::Fitness::Alloc;	// Fitness
+		GP::Vivarium::Handle lVivarium = new GP::Vivarium(lTreeAlloc, lFitnessAlloc);
 		
 		// 5. Initialize and evolve the vivarium.
 		lEvolver->initialize(lSystem, argc, argv);
 		lEvolver->evolve(lVivarium);
 		
-		HallOfFame& HOF = lVivarium->getHallOfFame();	// Hall of fame (contains the best individuals)
-		HOF.sort();
-		lEvalOp->set_validation_interval();
-		
 		// Go trough the hall of fame and retest the individuals on the validaion set
-		for(unsigned int i=0;i<HOF.size();++i)
+		HallOfFame& lHOF = lVivarium->getHallOfFame();
+		lHOF.sort();
+//		std::cout << std::endl << "Training set:\tValidation set:" << std::endl;
+		GP::Individual::Handle lBestIndividual = castHandleT<GP::Individual>(lHOF[0].mIndividual);
+		trading::Fitness::Handle lBestFitness = castHandleT<trading::Fitness>(lBestIndividual->getFitness());
+		
+		// Find the best individual on the validation set
+		for(unsigned int i=0;i<lHOF.size();++i)
 		{
-			GP::Individual::Handle lIndividual = castHandleT<GP::Individual>(HOF[i].mIndividual);
-			Beagle::Fitness::Handle loldFitness = lIndividual->getFitness();
-			Beagle::Fitness::Handle lFitness = lEvalOp->test(lIndividual, lSystem);
-//			std::cout << lIndividual->serialize() << std::endl;
-			if (loldFitness->isLess(*lFitness)) {
-				std::cout << "Fitness increase on validation interval:" << std::endl;
-				std::cout << loldFitness->serialize() << "\t:\t" << lFitness->serialize() << std::endl;
+			GP::Individual::Handle lIndividual = castHandleT<GP::Individual>(lHOF[i].mIndividual);
+			trading::Fitness::Handle lFitness = castHandleT<trading::Fitness>(lIndividual->getFitness());
+			std::cout << "-> "<< lFitness->getTrainingSetValue() << "\t" << lFitness->getValidationSetValue() << std::endl;
+			if(lBestFitness->getValidationSetValue() < lFitness->getValidationSetValue() ) {
+				lBestIndividual = castHandleT<GP::Individual>(lHOF[i].mIndividual);
+ 				lBestFitness = castHandleT<trading::Fitness>(lBestIndividual->getFitness());
+//				std::cout << "Old    -> " << lBestIndividual->serialize() << std::endl;
+//				std::cout << "Better -> " << lIndividual->serialize() << std::endl;
 			}
 		}
+
+		std::ofstream best;
+		best.open("best.xml");
+		PACC::XML::Streamer str(best,2);
+		lBestIndividual->write(str,true);
+		best.close();
+
 	} catch(Exception& inException) {
 		inException.terminate();
 	} catch(exception& inException) {
