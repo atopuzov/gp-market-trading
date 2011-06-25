@@ -4,7 +4,7 @@
  ***************************************************************************/
 #include "beagle/GP.hpp"
 #include "eval.hpp"
-#include "fit.hpp"
+#include "Fitness.hpp"
 #include <cmath>
 
 using namespace Beagle;
@@ -118,6 +118,18 @@ void eval::initialize(Beagle::System& ioSystem)
 			"1",
 			"Strategy to compare to: (1) Buy&Hold (2) Random");
 		ioSystem.getRegister().addEntry("trading.strategy", r_strategy, lDescription);
+	}
+	
+	if(ioSystem.getRegister().isRegistered("trading.calc_vs")) {
+		r_calc_vs = castHandleT<Bool>(ioSystem.getRegister()["trading.calc_vs"]);
+	} else {
+		r_calc_vs = new Bool(true);
+		Register::Description lDescription(
+			"calc_vs",
+			"Bool",
+			"true",
+			"Calculate fitness on the validation set");
+		ioSystem.getRegister().addEntry("trading.calc_vs", r_calc_vs, lDescription);
 	}
 }
 
@@ -238,12 +250,14 @@ double eval::evaluate_interval(GP::Individual& inIndividual, GP::Context& ioCont
 Fitness::Handle eval::evaluate(GP::Individual& inIndividual, GP::Context& ioContext)
 {
 //	if(interval_start == "" || interval_end == "")
-
 	set_training_interval();
-	double eval1		= evaluate_interval(inIndividual, ioContext);	// Calculate the fitness
-	set_validation_interval();
-	double eval2		= evaluate_interval(inIndividual, ioContext);	// Calculate the fitness
-	std::cout << eval1 << "\t" << eval2 << std::endl;
+	double eval1 = evaluate_interval(inIndividual, ioContext);	// Calculate the fitness on the training interval
+	double eval2 = 0;
+	if(r_calc_vs->getWrappedValue()) {
+		set_validation_interval();
+		eval2 = evaluate_interval(inIndividual, ioContext);	// Calculate the fitness on the validation interval
+	}
+//	std::cout << eval1 << "\t" << eval2 << std::endl;
 	return new trading::Fitness(eval1,eval2);
 }
 

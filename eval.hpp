@@ -45,6 +45,7 @@ protected:
 	Beagle::String::Handle	r_te_date;		// Training interval end date
 	Beagle::String::Handle	r_vs_date;		// Validation interval start date
 	Beagle::String::Handle	r_ve_date;		// Validation interval end date
+	Beagle::Bool::Handle	r_calc_vs;		// Calculate fitness on the validation set
 	
 	std::string interval_start;
 	std::string interval_end;
