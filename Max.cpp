@@ -4,6 +4,7 @@
  ***************************************************************************/
 #include "beagle/GP.hpp"
 #include "Max.hpp"
+#include "util.hpp"
 
 #include <cmath>
 #include <fstream>

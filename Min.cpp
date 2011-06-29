@@ -4,6 +4,7 @@
  ***************************************************************************/
 #include "beagle/GP.hpp"
 #include "Min.hpp"
+#include "util.hpp"
 
 #include <cmath>
 #include <fstream>

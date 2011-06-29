@@ -4,6 +4,7 @@
  ***************************************************************************/
 #include "beagle/GP.hpp"
 #include "Avg.hpp"
+#include "util.hpp"
 
 #include <sstream>
 #include <cmath>
