@@ -49,7 +49,8 @@ document.elements.each("/Beagle/Logger/Log/Stats") { |stats_element|
           td_min = measure_element.elements["Min"].text.to_f
         end
       }
-      fitness_dat.puts    generation.to_s + "\t" + avg_ts.to_s + "\t" + avg_vs.to_s
+      #fitness_dat.puts    generation.to_s + "\t" + avg_ts.to_s + "\t" + avg_vs.to_s
+      fitness_dat.puts    generation.to_s + "\t" + avg_ts.to_s + "\t" + std_ts.to_s + "\t" + max_ts.to_s + "\t" + avg_vs.to_s + "\t" + std_vs.to_s + "\t" + max_vs.to_s
       fitness_ts_dat.puts generation.to_s + "\t" + avg_ts.to_s + "\t" + std_ts.to_s + "\t" + max_ts.to_s + "\t" + min_ts.to_s
       fitness_vs_dat.puts generation.to_s + "\t" + avg_vs.to_s + "\t" + std_vs.to_s + "\t" + max_vs.to_s + "\t" + min_vs.to_s
       treesize_dat.puts   generation.to_s + "\t" + ts_avg.to_s + "\t" + ts_std.to_s + "\t" + ts_max.to_s + "\t" + ts_min.to_s
