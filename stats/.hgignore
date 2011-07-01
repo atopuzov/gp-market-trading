@@ -1,0 +1,6 @@
+syntax: glob
+*.dat
+*.png
+*.ps
+*.eps
+*.log
