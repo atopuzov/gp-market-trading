@@ -23,7 +23,7 @@ void eval::initialize(Beagle::System& ioSystem)
 	} else {
 		r_database = new String("se.db");
 		Register::Description lDescription(
-			"Database",
+			"Database filename",
 			"String",
 			"se.db",
 			"Name of the database file.");
@@ -36,7 +36,7 @@ void eval::initialize(Beagle::System& ioSystem)
 	} else {
 		r_ticker = new String("PBZ-R-A");
 		Register::Description lDescription(
-			"Ticker",
+			"Stock ticker symbol",
 			"String",
 			"PBZ-R-A",
 			"Stock ticker symbol");
@@ -49,10 +49,10 @@ void eval::initialize(Beagle::System& ioSystem)
 	} else {
 		r_ts_date = new String("2006-01-01");
 		Register::Description lDescription(
-			"ts_date",
+			"Training set interval start date",
 			"String",
 			"2000-01-01",
-			"Training interval start date");
+			"Training set interval start date");
 		ioSystem.getRegister().addEntry("trading.ts_date", r_ts_date, lDescription);
 	}
 
@@ -62,10 +62,10 @@ void eval::initialize(Beagle::System& ioSystem)
 	} else {
 		r_te_date = new String("2005-31-12");
 		Register::Description lDescription(
-			"te_date",
+			"Training set interval end date",
 			"String",
 			"2005-31-12",
-			"Training interval end date");
+			"Training set interval end date");
 		ioSystem.getRegister().addEntry("trading.te_date", r_te_date, lDescription);
 	}
 
@@ -75,10 +75,10 @@ void eval::initialize(Beagle::System& ioSystem)
 	} else {
 		r_vs_date = new String("2006-01-01");
 		Register::Description lDescription(
-			"vs_date",
+			"Validation set interval start date",
 			"String",
 			"2006-01-01",
-			"Validation interval start date");
+			"Validation set interval start date");
 		ioSystem.getRegister().addEntry("trading.vs_date", r_vs_date, lDescription);
 	}
 
@@ -88,10 +88,10 @@ void eval::initialize(Beagle::System& ioSystem)
 	} else {
 		r_ve_date = new String("now");
 		Register::Description lDescription(
-			"ve_date",
+			"Validation set interval end date",
 			"String",
 			"now",
-			"Validation interval end date");
+			"Validation set interval end date");
 		ioSystem.getRegister().addEntry("trading.ve_date", r_ve_date, lDescription);
 	}
 
@@ -101,7 +101,7 @@ void eval::initialize(Beagle::System& ioSystem)
 	} else {
 		r_fee = new Double(0.0025);
 		Register::Description lDescription(
-			"fee",
+			"Transaction cost",
 			"Double",
 			"0.0025",
 			"Transaction cost in percentage of the price");
@@ -113,7 +113,7 @@ void eval::initialize(Beagle::System& ioSystem)
 	} else {
 		r_strategy = new Int(1);
 		Register::Description lDescription(
-			"strategy",
+			"Baseline strategy",
 			"Integer",
 			"1",
 			"Strategy to compare to: (1) Buy&Hold (2) Random");
@@ -125,9 +125,9 @@ void eval::initialize(Beagle::System& ioSystem)
 	} else {
 		r_calc_vs = new Bool(true);
 		Register::Description lDescription(
-			"calc_vs",
+			"Calculate fitness on the validation set",
 			"Bool",
-			"true",
+			"1",
 			"Calculate fitness on the validation set");
 		ioSystem.getRegister().addEntry("trading.calc_vs", r_calc_vs, lDescription);
 	}
