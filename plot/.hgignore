@@ -1,5 +1,0 @@
-# Sytax is Shell-style
-syntax: glob
-*.dat
-*.png
-draw.gnuplot
