@@ -1,6 +1,6 @@
 CXX      = g++
 LINK     = ld
-CXXFLAGS = -O2 -I.. -Wall -Wno-uninitialized
+CXXFLAGS = -g -O2 -I.. -Wall -Wno-uninitialized
 OBJ      = plot.o
 
 .cpp.o:
@@ -10,7 +10,10 @@ OBJ      = plot.o
 prog.exe : $(OBJ)
 	$(CXX) -o prog.exe -L. -lsqlite3 $(OBJ) 
 
-all:	prog.exe
+draw:
+	gnuplot < draw.gnuplot
+
+all:	prog.exe draw
 
 clean:
 	rm -f prog.exe *.o *.png *.dat

@@ -3,13 +3,10 @@ syntax: glob
 *.dll
 *.o
 *~
-prog.exe
-beagle.log~
-beagle.log
-beagle.obm
-beagle.obm~
-se.db
-best.xml
+*.obm
+*.db
+*.xml
+*.exe
 
 # Cmake stuff
 CMakeCache.txt

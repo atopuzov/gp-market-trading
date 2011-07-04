@@ -10,6 +10,7 @@
 #include <string>
 #include <fstream>
 #include "sqlite3.h"
+
 using namespace std;
 
 int main()
@@ -49,8 +50,8 @@ int main()
 		string ticker = (const char*)sqlite3_column_text(ps_available_tickers,0);
 		
 		// Select all the data
-		//string sql_select_data  = "SELECT DATE(DATUM),PRVA,NAJVISA,NAJNIZA,ZADNJA FROM ZSE WHERE DIONICA='" + ticker + "';"; 		
-		string sql_select_data  = "SELECT DATE(DATUM),ZADNJA FROM ZSE WHERE DIONICA='" + ticker + "';"; 
+		string sql_select_data  = "SELECT DATE(DATUM),PRVA,NAJVISA,NAJNIZA,ZADNJA FROM ZSE WHERE DIONICA='" + ticker + "';"; 		
+		//string sql_select_data  = "SELECT DATE(DATUM),ZADNJA FROM ZSE WHERE DIONICA='" + ticker + "';"; 
 		sqlite3_stmt *ps_select_data;
 		sqlite3_prepare( database, sql_select_data.c_str(), sql_select_data.size(), &ps_select_data, NULL );
 		
@@ -59,16 +60,18 @@ int main()
 		string sql_lowest_date = "SELECT MIN(DATE(DATUM)) FROM ZSE WHERE DIONICA='" + ticker + "';"; 
 		sqlite3_prepare( database, sql_lowest_date.c_str(), sql_lowest_date.size(), &ps_lowest_date, NULL );
 		string min_datum;
-		if( (rc =sqlite3_step(ps_lowest_date)) == SQLITE_ROW )
+		if( (rc =sqlite3_step(ps_lowest_date)) == SQLITE_ROW ) {
 			min_datum  = (const char*)sqlite3_column_text(ps_lowest_date,0);
-		else
+		} else {
 			min_datum  = "2000-01-01";		// Set a default date on error
+		}
 		sqlite3_finalize(ps_lowest_date);	// Free resources
 
 		gplot =  "set output \"" + ticker + ".png\" \n";
 		gplot += "plot [\"" + min_datum + "\":] '" + ticker + ".dat'     ";
-		gplot += "using 1:2 title \"" + ticker + "\" with lines \n";
+		//gplot += "using 1:2 title \"" + ticker + "\" with lines \n";
 		//gplot += "using 1:2:3:4:5 title \"" + ticker + "\" with financebars \n";
+		gplot += "using 1:2:3:4:5 title \"" + ticker + "\" with candlesticks \n";
 		cmd << gplot;
 		string filename = ticker + ".dat";
 		
@@ -77,13 +80,13 @@ int main()
 		
 		// Loop trough the data and output it ta a file
 		while ((rc = sqlite3_step(ps_select_data)) == SQLITE_ROW ) {
-			string datum   = (const char*)sqlite3_column_text(ps_select_data,0);
-			string prva    = (const char*)sqlite3_column_text(ps_select_data,1);
-			//string najvisa = (const char*)sqlite3_column_text(ps_select_data,2);
-			//string najniza = (const char*)sqlite3_column_text(ps_select_data,3);
-			//string zadnja  = (const char*)sqlite3_column_text(ps_select_data,4);
-			//dataout << datum << "\t" << prva << "\t" << najvisa << "\t" << najniza << "\t" << zadnja << endl;
-			dataout << datum << "\t" << prva << endl;
+			string date  = (const char*)sqlite3_column_text(ps_select_data,0);
+			string open  = (const char*)sqlite3_column_text(ps_select_data,1);
+			string high  = (const char*)sqlite3_column_text(ps_select_data,2);
+			string low   = (const char*)sqlite3_column_text(ps_select_data,3);
+			string close = (const char*)sqlite3_column_text(ps_select_data,4);
+			dataout << date << "\t" << open << "\t" << low << "\t" << high << "\t" << close << endl;
+			//dataout << datum << "\t" << prva << endl;
 		}
 		dataout.close();					// Close the file with data
 		sqlite3_finalize(ps_select_data);	// Free resources
