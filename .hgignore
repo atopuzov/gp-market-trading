@@ -14,3 +14,20 @@ CMakeFiles
 Makefile
 cmake_install.cmake
 install_manifest.txt
+
+# Statistics dir
+stats/*.dat
+stats/*.png
+stats/*.ps
+stats/*.eps
+stats/*.pdf
+stats/*.log
+stats/*.xml
+
+# Plot
+plot/*.dat
+plot/*.png
+plot/draw.gnuplot
+
+# Tmp dir
+tmp/*
