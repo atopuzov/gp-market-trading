@@ -25,7 +25,6 @@ public:
   virtual ~RSI() { }
 
 #ifdef BEAGLE_HAVE_RTTI
-  virtual const std::type_info* getArgType(unsigned int inN, Beagle::GP::Context& ioContext) const;
   virtual const std::type_info* getReturnType(Beagle::GP::Context& ioContext) const;
 #endif // BEAGLE_HAVE_RTTI
 

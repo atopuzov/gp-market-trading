@@ -18,12 +18,7 @@ RSI::RSI() : Beagle::GP::Primitive(0, "RSI")
 
 #ifdef BEAGLE_HAVE_RTTI
 
-const std::type_info* RSI::getArgType(unsigned int inN, Beagle::GP::Context& ioContext) const
-{
-	return NULL;
-}
-
-// Return vaule type: double
+// Return value type: double
 const std::type_info* RSI::getReturnType(Beagle::GP::Context& ioContext) const
 {
   return &typeid(Double);
