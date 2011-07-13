@@ -27,15 +27,4 @@ if ( sqlite3_step(statement) != SQLITE_ROW ) { \
 	throw "Unable to return the value of the SQL query!\n"; \
 }
 
-
-template <class T>
-inline std::string to_string (const T& t)
-{
-	std::stringstream ss;
-	ss << t;
-	return ss.str();
-}
-
-
-
 #endif // util_hpp
