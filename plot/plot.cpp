@@ -10,6 +10,7 @@
 #include <string>
 #include <fstream>
 #include "sqlite3.h"
+#include "ta.hpp"
 
 using namespace std;
 
@@ -69,9 +70,9 @@ int main()
 
 		gplot =  "set output \"" + ticker + ".png\" \n";
 		gplot += "plot [\"" + min_datum + "\":] '" + ticker + ".dat'     ";
-		//gplot += "using 1:2 title \"" + ticker + "\" with lines \n";
+		gplot += "using 1:2 title \"" + ticker + "\" with lines \n";
 		//gplot += "using 1:2:3:4:5 title \"" + ticker + "\" with financebars \n";
-		gplot += "using 1:2:3:4:5 title \"" + ticker + "\" with candlesticks \n";
+		//gplot += "using 1:2:3:4:5 title \"" + ticker + "\" with candlesticks \n";
 		cmd << gplot;
 		string filename = ticker + ".dat";
 		
@@ -85,6 +86,10 @@ int main()
 			string high  = (const char*)sqlite3_column_text(ps_select_data,2);
 			string low   = (const char*)sqlite3_column_text(ps_select_data,3);
 			string close = (const char*)sqlite3_column_text(ps_select_data,4);
+			//string sma = sma(database, ticker, date, 10)
+			//string ema = ema(database, ticker, date, 10)
+			//string roc = roc(database, ticker, date, 10)
+			//string rsi = rsi(database, ticker, date, 14)
 			dataout << date << "\t" << open << "\t" << low << "\t" << high << "\t" << close << endl;
 			//dataout << datum << "\t" << prva << endl;
 		}
