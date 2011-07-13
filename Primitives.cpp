@@ -3,6 +3,22 @@
  * <aleksandar.topuzovic@fer.hr>, <aleksandar.topuzovic@gmail.com>         *
  ***************************************************************************/
 #include "Primitives.hpp"
+#include "LessThan.hpp"
+#include "GreaterThan.hpp"
+#include "IfThenElse.hpp"
+#include "Avg.hpp"
+#include "Abs.hpp"
+#include "Max.hpp"
+#include "Min.hpp"
+#include "Eq.hpp"
+#include "Context.hpp"
+#include "EphemeralDay.hpp"
+#include "ROC.hpp"
+#include "RSI.hpp"
+#include "EMA.hpp"
+#include "MACD.hpp"
+#include "ConstantDouble.hpp"
+
 
 void AddPrimitives(Beagle::GP::PrimitiveSet::Handle lSet)
 {
@@ -33,6 +49,8 @@ void AddPrimitives(Beagle::GP::PrimitiveSet::Handle lSet)
 	lSet->insert(new Min);			// Minimal price in N days
 	lSet->insert(new Max);			// Maximum price in N days
 	lSet->insert(new Abs);			// Absolute value
-//	lSet->insert(new ROC);			// Rate of change
+	lSet->insert(new ROC);			// Rate of change
 //	lSet->insert(new RSI);			// Relative strength indicator
+	lSet->insert(new EMA);			// Exponential moving average
+//	lSet->insert(new MACD);			// Moving Average Convergence-Divergence
 }
