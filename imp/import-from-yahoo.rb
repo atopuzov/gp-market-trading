@@ -9,7 +9,7 @@ require 'optparse'  # command line options
 
 options = {}
 optparse = OptionParser.new do |opts|
-  opts.banner = "Usage: import-zse.rb [options]"
+  opts.banner = "Usage: import-yahoo.rb [options]"
   
   options[:ticker] = "AAPL"
     opts.on( '-t', '--ticker TICKER', 'Ticker identifier, default: AAPL' ) do|o|
