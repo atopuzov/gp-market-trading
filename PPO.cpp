@@ -33,12 +33,7 @@ void PPO::execute(GP::Datum& outDatum, GP::Context& ioContext)
 	Double& lResult = castObjectT<Double&>(outDatum);
 	trading::Context& aContext = castObjectT<trading::Context&>(ioContext);
 	
-	double ema_12_day = ema(aContext.database, aContext.dionica, aContext.datum, 12 );
-	double ema_26_day = ema(aContext.database, aContext.dionica, aContext.datum, 26 );
-//	std::cout << "12day: " << ema_12_day << ", 26day: " << ema_26_day << std::endl;
-
-	lResult = ((ema_12_day - ema_26_day) / ema_26_day) * 100;
-	
+	lResult	= ppo(aContext.database, aContext.dionica, aContext.datum);
 //	std::cout << "PPO: " << lResult << std::endl;
 }
 

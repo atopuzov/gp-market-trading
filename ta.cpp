@@ -173,11 +173,22 @@ std::pair<double,double> avg_gain_loss(sqlite3 *database, std::string ticker, st
 	return avg_gain_loss_r(database, ticker, date, days, days);
 }
 
-// Relative Strength Index
+// Relative Strength Index (RSI)
 double rsi(sqlite3 *database, std::string ticker, std::string date, int days)
 {
 	std::pair<double,double> agl = avg_gain_loss(database, ticker, date, days);
 	double rs = agl.first/agl.second;
+	//std::cout << "Average gain: " << agl.first << ", average loss: " << agl.second << ", rs: " << rs << std::endl;
 	return (double)100 - (double)100/((double)1+rs);
 }
+
+// Exponential Moving Average (PPO)
+double ppo(sqlite3 *database, std::string ticker, std::string date)
+{
+		double ema_12_day = ema(database, ticker, date, 12 );
+		double ema_26_day = ema(database, ticker, date, 26 );
+		//std::cout << "12day: " << ema_12_day << ", 26day: " << ema_26_day << std::endl;
+		return ((ema_12_day - ema_26_day) / ema_26_day) * 100;
+}
+
 
