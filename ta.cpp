@@ -2,6 +2,7 @@
  * (c) 2008-2011 Aleksandar Topuzović                                      *
  * <aleksandar.topuzovic@fer.hr>, <aleksandar.topuzovic@gmail.com>         *
  ***************************************************************************/
+#include <beagle/macros.hpp>
 #include "ta.hpp"
 #include "util.hpp"
 
@@ -15,10 +16,10 @@ double sma(sqlite3 *database, std::string ticker, std::string date, int days)
 	sql			+= "SELECT DATUM FROM ZSE WHERE DATUM < '";
 	sql			+= date;
 	sql			+= "' LIMIT "; 
-	sql			+= to_string<int>(days);
+	sql			+= Beagle::int2str(days);
 	sql			+= ")";
 
-//	std::cout << sql  << std::endl;
+	//std::cout << sql  << std::endl;
 
 	sqlite3_stmt *preparedStatement;
 	SQLITE_PREPARE_STATEMENT_TEST(preparedStatement, sql, database);
@@ -42,8 +43,8 @@ double ema_r(sqlite3 *database, std::string ticker, std::string date, int days, 
 	// std::cout << "Multiplier: " << multiplier << ",\t Days: " << days << std::endl;
 		
 	std::string previous_date = date_days_ago(database, ticker, date, 1);
-	double ema_previous_day = ema_r(database, ticker, previous_date, days, day-1);
-	double price_this_day   = price_on_day(database, ticker, date);
+	double ema_previous_day   = ema_r(database, ticker, previous_date, days, day-1);
+	double price_this_day     = price_on_day(database, ticker, date);
 	
 	return ema_previous_day + multiplier*(price_this_day - ema_previous_day);
 }
@@ -93,7 +94,7 @@ std::string date_days_ago(sqlite3 *database, std::string ticker, std::string dat
 	sql				+= "') AND DATUM < '";
 	sql				+= date;
 	sql				+= "' ORDER BY DATUM DESC LIMIT ";
-	sql				+= to_string<int>(days-1);
+	sql				+= Beagle::int2str(days-1);
 	sql				+= ", 1";
 
 //	std::cout << sql  << std::endl;
@@ -120,7 +121,7 @@ std::pair<double,double> avg_gain_loss_r(sqlite3 *database, std::string ticker, 
 		sql				+= "') AND DATUM < '";
 		sql				+= date;
 		sql				+= "' ORDER BY DATUM DESC LIMIT ";
-		sql				+= to_string<int>(days);
+		sql				+= Beagle::int2str(days);
 	
 //		std::cout << sql << std::endl;
 	
@@ -160,8 +161,8 @@ std::pair<double,double> avg_gain_loss_r(sqlite3 *database, std::string ticker, 
 		loss = previous_price - price;
 	}
 	
-	double avg_gain = (prev.first  * (days-1) + gain) / (double)days;
-	double avg_loss = (prev.second * (days-1) + loss) / (double)days;
+	double avg_gain = (prev.first  * (double)(days-1) + gain) / (double)days;
+	double avg_loss = (prev.second * (double)(days-1) + loss) / (double)days;
 	//std::cout << "avg_gain: " << avg_gain << ", avg_loss: " << avg_loss << std::endl;
 	return std::pair<double,double>(avg_gain, avg_loss);
 }
