@@ -12,7 +12,7 @@
 
 using namespace Beagle;
 
-// Ime RSI
+// Name: RSI
 RSI::RSI() : Beagle::GP::Primitive(0, "RSI")
 {	}
 
@@ -26,7 +26,7 @@ const std::type_info* RSI::getReturnType(Beagle::GP::Context& ioContext) const
 
 #endif // BEAGLE_HAVE_RTTI
 
-// Relative strength index
+// Relative strength index (14 day)
 // RSI = 100 - 100/(1 + RS*)
 // RS = Average of x days' up closes / Average of x days' down closes.	
 void RSI::execute(GP::Datum& outDatum, GP::Context& ioContext)
@@ -34,9 +34,6 @@ void RSI::execute(GP::Datum& outDatum, GP::Context& ioContext)
 	Double& lResult = castObjectT<Double&>(outDatum);
 	trading::Context& aContext = castObjectT<trading::Context&>(ioContext);
 
-	std::pair<double,double> agl = avg_gain_loss(aContext.database, aContext.dionica, aContext.datum, 14);
-	double rs = agl.first/agl.second;
-	lResult = (double)100 - (double)100/((double)1+rs);
-	
+	lResult = rsi(aContext.database, aContext.dionica, aContext.datum, 14);
 //	std::cout << "RSI: " << lResult << std::endl;
 }

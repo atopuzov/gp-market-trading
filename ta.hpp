@@ -16,6 +16,7 @@ double price_days_ago(sqlite3 *database, std::string ticker, std::string date, i
 std::string date_days_ago(sqlite3 *database, std::string ticker, std::string date, int days);
 std::pair<double,double> avg_gain_loss(sqlite3 *database, std::string ticker, std::string date, int days);
 std::pair<double,double> avg_gain_loss_r(sqlite3 *database, std::string ticker, std::string date, int days, int day);
+double rsi(sqlite3 *database, std::string ticker, std::string date, int days);
 
 
 #endif // ta_hpp

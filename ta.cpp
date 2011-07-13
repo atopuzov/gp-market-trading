@@ -49,6 +49,7 @@ double ema_r(sqlite3 *database, std::string ticker, std::string date, int days, 
 	return ema_previous_day + multiplier*(price_this_day - ema_previous_day);
 }
 
+// Exponential moving average
 double ema(sqlite3 *database, std::string ticker, std::string date, int days)
 {
 	return ema_r(database, ticker, date, days, days);
@@ -172,12 +173,11 @@ std::pair<double,double> avg_gain_loss(sqlite3 *database, std::string ticker, st
 	return avg_gain_loss_r(database, ticker, date, days, days);
 }
 
-
-
-
-
-
-
-
-
+// Relative Strength Index
+double rsi(sqlite3 *database, std::string ticker, std::string date, int days)
+{
+	std::pair<double,double> agl = avg_gain_loss(database, ticker, date, days);
+	double rs = agl.first/agl.second;
+	return (double)100 - (double)100/((double)1+rs);
+}
 
