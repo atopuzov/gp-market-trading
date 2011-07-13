@@ -17,6 +17,7 @@
 #include "RSI.hpp"
 #include "EMA.hpp"
 #include "MACD.hpp"
+#include "PPO.hpp"
 #include "ConstantDouble.hpp"
 
 
@@ -53,4 +54,5 @@ void AddPrimitives(Beagle::GP::PrimitiveSet::Handle lSet)
 //	lSet->insert(new RSI);			// Relative strength indicator
 	lSet->insert(new EMA);			// Exponential moving average
 //	lSet->insert(new MACD);			// Moving Average Convergence-Divergence
+//	lSet->insert(new PPO);			// Percentage Price Oscilator
 }
