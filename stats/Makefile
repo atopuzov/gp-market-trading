@@ -17,5 +17,5 @@
 all:	draw
 
 clean:
-	rm -f *.dot *.ps *.pdf
-	rm ${TMPFILE}
+	rm -f *.dat *.dot *.ps *.pdf
+
