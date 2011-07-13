@@ -15,7 +15,7 @@ LIBS     = -L. -L/Users/aco/local/lib $(LBEAGLE) $(LPACC) $(LSQLITE)
 CXXFLAGS = -O2 -pipe -fomit-frame-pointer -Wall -Wno-uninitialized ${IBEAGLE} $(IPACC) $(ISQLITE)
 OBJ      = 	eval.o LessThan.o GreaterThan.o IfThenElse.o Avg.o ConstantDouble.o \
 			Max.o Min.o Eq.o Abs.o Context.o EphemeralDay.o Primitives.o ROC.o \
-			Fitness.o TermOp.o StatsCalcOp.o
+			Fitness.o TermOp.o StatsCalcOp.o EMA.o ta.o RSI.o MACD.o PPO.o
 
 .cpp.o:
 	$(CXX) -c $(CXXFLAGS) $< -o $@
@@ -30,5 +30,8 @@ all : prog ind
 
 clean:
 	rm -f prog.exe ind.exe *.o
-
+	
+cgen:
+	rm -rf *.obm*
+	rm -rf beagle.log*
 
