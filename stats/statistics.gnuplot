@@ -20,8 +20,10 @@ set style line 3 lt 3 lw 2 lc "black"
 set style line 4 lt 4 lw 2 lc "black"
 set style line 5 lt 1 lc "black" lw 1
 set key box linestyle 5
-set key out vert
-set key right top
+#set key out vert
+#set key right top
+set key left top
+set key spacing 1.5
 #set nokey
 
 set output "stats_fitness_ts.eps"
