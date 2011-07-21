@@ -5,7 +5,6 @@
 #ifndef ta_hpp
 #define ta_hpp
 
-#include <sqlite3.h>
 #include <iostream>
 
 double sma(sqlite3 *database, std::string ticker, std::string date, int days);

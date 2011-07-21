@@ -3,6 +3,7 @@
  * <aleksandar.topuzovic@fer.hr>, <aleksandar.topuzovic@gmail.com>         *
  ***************************************************************************/
 #include <beagle/macros.hpp>
+#include <sqlite3.h>
 #include "ta.hpp"
 #include "util.hpp"
 
