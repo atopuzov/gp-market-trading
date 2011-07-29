@@ -26,15 +26,20 @@ const std::type_info* PPO::getReturnType(Beagle::GP::Context& ioContext) const
 
 #endif // BEAGLE_HAVE_RTTI
 
-// Exponential Moving Average (PPO)
+// Percentage Price Oscillator (PPO)
 // PPO = (12-day EMA - 26-day EMA)/ 26-day EMA * 100
 void PPO::execute(GP::Datum& outDatum, GP::Context& ioContext)
 {
-	Double& lResult = castObjectT<Double&>(outDatum);
-	trading::Context& aContext = castObjectT<trading::Context&>(ioContext);
-	
-	lResult	= ppo(aContext.database, aContext.dionica, aContext.datum);
-//	std::cout << "PPO: " << lResult << std::endl;
+		Double& lResult = castObjectT<Double&>(outDatum);
+		trading::Context& aContext = castObjectT<trading::Context&>(ioContext);
+
+		double ema_12_day = ema(aContext.database, aContext.dionica, aContext.datum, 12 );
+		double ema_26_day = ema(aContext.database, aContext.dionica, aContext.datum, 26 );
+	//	std::cout << "12day: " << ema_12_day << ", 26day: " << ema_26_day << std::endl;
+
+		lResult = (ema_12_day - ema_26_day) / ema_26_day * 100;
+
+	//	std::cout << "PPO: " << lResult << std::endl;
 }
 
 
