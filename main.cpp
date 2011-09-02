@@ -58,6 +58,13 @@ int main(int argc, char *argv[]) {
 		GP::Individual::Handle lBestIndividual = castHandleT<GP::Individual>(lHOF[0].mIndividual);
 		trading::Fitness::Handle lBestFitness = castHandleT<trading::Fitness>(lBestIndividual->getFitness());
 		
+		// Best individual on the training set
+		std::ofstream best_ts;
+		best_ts.open("best-ts.xml");
+		PACC::XML::Streamer str1(best_ts,2);
+		lBestIndividual->write(str1,true);
+		best_ts.close();
+		
 		// Find the best individual on the validation set
 		for(unsigned int i=0;i<lHOF.size();++i)
 		{
@@ -72,11 +79,12 @@ int main(int argc, char *argv[]) {
 			}
 		}
 
-		std::ofstream best;
-		best.open("best.xml");
-		PACC::XML::Streamer str(best,2);
-		lBestIndividual->write(str,true);
-		best.close();
+		// Best individual on the validation set
+		std::ofstream best_vs;
+		best_vs.open("best-vs.xml");
+		PACC::XML::Streamer str2(best_vs,2);
+		lBestIndividual->write(str2,true);
+		best_vs.close();
 
 	} catch(Exception& inException) {
 		inException.terminate();
