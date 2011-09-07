@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
 		lSystem->initialize(argc, argv);
 		lSystem->postInit();
 		lEvalOp->postInit(*lSystem);
-		std::string lFileName = "best.xml"; 		// Load the best individual
+		std::string lFileName = lEvalOp->get_best_filename(); 		// Load the best individual
 		
 		GP::Tree::Alloc::Handle lTreeAlloc = new GP::Tree::Alloc;
 		trading::Fitness::Alloc::Handle lFitnessAlloc = new trading::Fitness::Alloc;	// Fitness
@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
 	    trading::Fitness::Handle lFitness = castHandleT<trading::Fitness>(lEvalOp->test(lIndividual, lSystem));
 	
 	    // Write fitness to screen
-	    std::cout << "Fitness: " << std::endl;
+	    // std::cout << "Fitness: " << std::endl;
 	    std::cout << lFitness->getTrainingSetValue() << std::endl;
 
 	} catch(Exception& inException) {

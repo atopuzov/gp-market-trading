@@ -131,6 +131,19 @@ void eval::initialize(Beagle::System& ioSystem)
 			"Calculate fitness on the validation set");
 		ioSystem.getRegister().addEntry("trading.calc_vs", r_calc_vs, lDescription);
 	}
+	
+// Database filename
+	if(ioSystem.getRegister().isRegistered("trading.best")) {
+		r_best = castHandleT<String>(ioSystem.getRegister()["trading.best"]);
+	} else {
+		r_best = new String("best.xml");
+		Register::Description lDescription(
+			"Name for saving/loading the best individual.",
+			"String",
+			"best.xml",
+			"Name of the best individual file.");
+		ioSystem.getRegister().addEntry("trading.best", r_best, lDescription);
+    }
 }
 
 double eval::evaluate_interval(GP::Individual& inIndividual, GP::Context& ioContext)

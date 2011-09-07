@@ -31,6 +31,11 @@ public:
 
 	void set_training_interval();
 	void set_validation_interval();
+	
+	std::string get_best_filename()
+	{
+		return r_best->getWrappedValue();
+	}
 
 
 protected:
@@ -46,6 +51,7 @@ protected:
 	Beagle::String::Handle	r_vs_date;		// Validation interval start date
 	Beagle::String::Handle	r_ve_date;		// Validation interval end date
 	Beagle::Bool::Handle	r_calc_vs;		// Calculate fitness on the validation set
+	Beagle::String::Handle	r_best;		// Validation interval end date
 	
 	std::string interval_start;
 	std::string interval_end;
